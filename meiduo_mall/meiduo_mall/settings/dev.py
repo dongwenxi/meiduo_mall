@@ -77,6 +77,7 @@ WSGI_APPLICATION = 'meiduo_mall.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/1.11/ref/settings/#databases
 
+# 数据库配置
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',  # 数据库引擎
@@ -123,3 +124,24 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.11/howto/static-files/
 
 STATIC_URL = '/static/'
+
+
+# 缓存到redis
+CACHES = {
+    "default": { # 默认
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://192.168.103.210:6379/0",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    },
+    "session": { # session
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://192.168.103.210:6379/1",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    },
+}
+SESSION_ENGINE = "django.contrib.sessions.backends.cache"  # 配置session使用缓存
+SESSION_CACHE_ALIAS = "session"  # 缓存到redis
