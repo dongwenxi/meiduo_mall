@@ -28,7 +28,6 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -56,7 +55,8 @@ ROOT_URLCONF = 'meiduo_mall.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.jinja2.Jinja2',
-        'DIRS': [os.path.join(BASE_DIR, 'templates')],  # 指定模板文件加载路径 # /Users/chao/Desktop/meiduo_25/meiduo_mall/meiduo_mall/templates
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
+    # 指定模板文件加载路径 # /Users/chao/Desktop/meiduo_25/meiduo_mall/meiduo_mall/templates
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -74,17 +74,19 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'meiduo_mall.wsgi.application'
 
-
 # Database
 # https://docs.djangoproject.com/en/1.11/ref/settings/#databases
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-    }
+        'ENGINE': 'django.db.backends.mysql',  # 数据库引擎
+        'HOST': '192.168.103.210',  # 数据库主机
+        'PORT': 3306,  # 数据库端口
+        'USER': 'meiduo_25',  # 数据库用户名
+        'PASSWORD': 'meiduo_25',  # 数据库用户密码
+        'NAME': 'meiduo_25'  # 数据库名字
+    },
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/1.11/ref/settings/#auth-password-validators
@@ -104,7 +106,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/1.11/topics/i18n/
 
@@ -117,7 +118,6 @@ USE_I18N = True
 USE_L10N = True
 
 USE_TZ = True
-
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.11/howto/static-files/
