@@ -20,7 +20,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 # 追加导包路径
-sys.path.insert(0, os.path.join(BASE_DIR, 'apps'))
+# sys.path.insert(0, os.path.join(BASE_DIR, 'apps'))
 print(sys.path)
 
 # [''/Users/chao/Desktop/meiduo_25/meiduo_mall/meiduo_mall/apps', /Users/chao/Desktop/meiduo_25/meiduo_mall', '/Users/chao/Desktop/meiduo_25/meiduo_mall', '/Users/chao/.virtualenvs/meiduo_new/lib/python36.zip', '/Users/chao/.virtualenvs/meiduo_new/lib/python3.6', '/Users/chao/.virtualenvs/meiduo_new/lib/python3.6/lib-dynload', '/usr/local/Cellar/python3/3.6.2/Frameworks/Python.framework/Versions/3.6/lib/python3.6', '/Users/chao/.virtualenvs/meiduo_new/lib/python3.6/site-packages', '/Applications/PyCharm.app/Contents/helpers/pycharm_matplotlib_backend']
@@ -37,7 +37,7 @@ DEBUG = True
 ALLOWED_HOSTS = []
 
 # Application definition
-# 注册/安装子应用: 当应用中使用到模型,需要迁移建表时,必须注册
+# 注册/安装子应用: 当应用中使用到模型,需要迁移建表时,必须注册, 子应用中使用到模板时也需要注册
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -47,7 +47,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     # 'users.apps.UsersConfig',
-    'users',
+    'users',  # 用户模块
 ]
 
 MIDDLEWARE = [
@@ -60,7 +60,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'meiduo_mall.urls'
+ROOT_URLCONF = 'meiduo_mall.urls'  # 项目路由入口
 
 # 模板配置项
 TEMPLATES = [
@@ -202,3 +202,7 @@ LOGGING = {
         },
     }
 }
+
+
+# 指定Django认证用户模型类: 应用名.模型名
+AUTH_USER_MODEL = 'users.User'
