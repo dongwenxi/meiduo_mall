@@ -11,11 +11,19 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/1.11/ref/settings/
 """
 
-import os
+import os, sys
+
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 # /Users/chao/Desktop/meiduo_25/meiduo_mall/meiduo_mall
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
+# 追加导包路径
+sys.path.insert(0, os.path.join(BASE_DIR, 'apps'))
+print(sys.path)
+
+# [''/Users/chao/Desktop/meiduo_25/meiduo_mall/meiduo_mall/apps', /Users/chao/Desktop/meiduo_25/meiduo_mall', '/Users/chao/Desktop/meiduo_25/meiduo_mall', '/Users/chao/.virtualenvs/meiduo_new/lib/python36.zip', '/Users/chao/.virtualenvs/meiduo_new/lib/python3.6', '/Users/chao/.virtualenvs/meiduo_new/lib/python3.6/lib-dynload', '/usr/local/Cellar/python3/3.6.2/Frameworks/Python.framework/Versions/3.6/lib/python3.6', '/Users/chao/.virtualenvs/meiduo_new/lib/python3.6/site-packages', '/Applications/PyCharm.app/Contents/helpers/pycharm_matplotlib_backend']
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.11/howto/deployment/checklist/
@@ -29,7 +37,7 @@ DEBUG = True
 ALLOWED_HOSTS = []
 
 # Application definition
-
+# 注册/安装子应用: 当应用中使用到模型,需要迁移建表时,必须注册
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -37,6 +45,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
+    # 'users.apps.UsersConfig',
+    'users',
 ]
 
 MIDDLEWARE = [
