@@ -33,4 +33,14 @@ class SMSCodeView(View):
         """
         :param mobile: 要接收短信验证码的手号
         """
+
+        # 接收到前端 传入的 mobile, image_code, uuid
+
+        # 创建redis连接对象 根据uuid作为key 获取到reids中当前用户的图形验证值
+        # 判断用户写的图形验证码和我们redis存的是否一致
+
+        # 发送短信
+        # 将生成好的短信验证码也存储到redis,以备后期校验
+        # 响应
+
         pass
