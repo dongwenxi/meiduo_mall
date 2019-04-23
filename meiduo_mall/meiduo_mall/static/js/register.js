@@ -3,7 +3,8 @@ var vm = new Vue({
     // 修改Vue变量的读取语法，避免和django模板语法冲突
     delimiters: ['[[', ']]'],
     data: {
-        host: host,
+        // host: host,
+        host,
         error_name: false,
         error_password: false,
         error_check_password: false,

@@ -70,3 +70,10 @@ class RegisterView(View):
 
         # 注册成功重定向到首页
         return redirect('/')
+
+
+class UsernameCountView(View):
+    """判断用户名是否已注册"""
+
+    def get(self, request, username):
+        pass
