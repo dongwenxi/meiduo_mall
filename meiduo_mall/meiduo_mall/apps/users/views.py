@@ -7,6 +7,7 @@ from django.db import DatabaseError
 
 from .models import User
 import logging
+from meiduo_mall.utils.response_code import RETCODE
 
 logger = logging.getLogger('django')  # 创建日志输出器对象
 
@@ -76,4 +77,8 @@ class UsernameCountView(View):
     """判断用户名是否已注册"""
 
     def get(self, request, username):
-        pass
+
+        # 查询当前用户名的个数要么0要么1 1代表重复
+        count = User.objects.filter(username=username).count()
+
+        return http.JsonResponse({'count': count, 'code': RETCODE.OK, 'errmsg': 'OK'})
