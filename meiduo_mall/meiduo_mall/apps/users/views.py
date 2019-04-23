@@ -2,7 +2,13 @@ from django.shortcuts import render, redirect
 from django.views import View
 from django import http
 import re
+from django.contrib.auth import login
+from django.db import DatabaseError
 
+from .models import User
+import logging
+
+logger = logging.getLogger('django')  # 创建日志输出器对象
 
 # Create your views here.
 class RegisterView(View):
@@ -26,10 +32,12 @@ class RegisterView(View):
         sms_code = request.POST.get('sms_code')
         allow = request.POST.get('allow')  # 单选框如果勾选就是 'on',如果没有勾选 None
 
-        # 校验数据前端传入数据是否符合要求 None, False, ''
+        #  all None, False, ''
+        # 校验前端传入的参数是否齐全
         if all([username, password, password2, mobile, sms_code, allow]) is False:
             return http.HttpResponseForbidden('缺少必传参数')
 
+        # 校验数据前端传入数据是否符合要求
         if not re.match(r'^[a-zA-Z0-9_-]{5,20}$', username):
             return http.HttpResponseForbidden('请输入5-20个字符的用户名')
 
@@ -42,12 +50,23 @@ class RegisterView(View):
         if not re.match(r'^1[3-9]\d{9}$', mobile):
             return http.HttpResponseForbidden('您输入的手机号格式不正确')
 
-        # 短信验证码校验后期再补充
+        # TODO 短信验证码校验后期再补充
 
 
         # 创建一个user
+        try:
+            user = User.objects.create_user(
+                username=username,
+                password=password,  # 密码在存储时需要加密后再存到表中
+                mobile=mobile
+            )
+        except DatabaseError as e:
+            logger.error(e)
+            return render(request, 'register.html', {'register_errmsg': '用户注册失败'})
+
 
         # 状态保持
+        login(request, user)  # 存储用户的id到session中记录它的登录状态
 
         # 注册成功重定向到首页
-        pass
+        return redirect('/')
