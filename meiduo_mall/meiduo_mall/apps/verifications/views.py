@@ -7,8 +7,8 @@ from random import randint
 from meiduo_mall.libs.captcha.captcha import captcha
 from meiduo_mall.utils.response_code import RETCODE
 import logging
-from meiduo_mall.libs.yuntongxun.sms import CCP
 from . import constants
+from celery_tasks.sms.tasks import send_sms_code
 
 logger = logging.getLogger('django')
 
@@ -88,7 +88,10 @@ class SMSCodeView(View):
 
         # 利用容联云SDK发短信
         # CCP().send_template_sms(手机号, [验证码, 提示用户验证码有效期多少分钟], 短信模板id)
-        CCP().send_template_sms(mobile, [sms_code, constants.SMS_CODE_REDIS_EXPIRES // 60], constants.SEND_SMS_TEMPLATE_ID)
+        # CCP().send_template_sms(mobile, [sms_code, constants.SMS_CODE_REDIS_EXPIRES // 60], constants.SEND_SMS_TEMPLATE_ID)
+        # 需要把CCP这行代码先加入到一个指定的仓库中，后续在单独的一个线程 进程去异步执行，不在当下去执行
+        # 由生产者 往 经纪人里面存一个任务
+        send_sms_code.delay(mobile, sms_code)
         # 响应
 
         return http.JsonResponse({'code': RETCODE.OK, 'errmsg': '发送短信验证码'})
