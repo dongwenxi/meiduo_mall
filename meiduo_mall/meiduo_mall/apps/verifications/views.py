@@ -41,6 +41,13 @@ class SMSCodeView(View):
         :param mobile: 要接收短信验证码的手号
         """
 
+        # 每次来发短信之前先拿当前要发短信的手机号获取redis的短信标记，如果没有标记就发，有标记提前响应
+        # 创建redis连接对象
+        redis_conn = get_redis_connection('verify_code')
+        send_flag = redis_conn.get('send_flag_%s' % mobile)
+        if send_flag:
+            return http.JsonResponse({'code': RETCODE.THROTTLINGERR, 'errmsg': '频繁发送短信'})
+
         # 接收到前端 传入的 mobile, image_code, uuid
         image_code_client = request.GET.get('image_code')
         uuid = request.GET.get('uuid')
@@ -49,8 +56,7 @@ class SMSCodeView(View):
         if all([image_code_client, uuid]) is False:
             return http.JsonResponse({'code': RETCODE.NECESSARYPARAMERR, 'errmsg': '缺少必传参数'})
 
-        # 创建redis连接对象
-        redis_conn = get_redis_connection('verify_code')
+
         # 根据uuid作为key 获取到redis中当前用户的图形验证值
         image_code_server = redis_conn.get('img_%s' % uuid)
         # 删除图形验证码，让它只能用一次，防止刷
@@ -67,6 +73,10 @@ class SMSCodeView(View):
         logger.info(sms_code)
         # 将生成好的短信验证码也存储到redis,以备后期校验
         redis_conn.setex('sms_%s' % mobile, constants.SMS_CODE_REDIS_EXPIRES, sms_code)
+
+        # 手机号发过短信后在redis中存储一个标记
+        redis_conn.setex('send_flag_%s' % mobile, 60, 1)
+
         # 利用容联云SDK发短信
         # CCP().send_template_sms(手机号, [验证码, 提示用户验证码有效期多少分钟], 短信模板id)
         CCP().send_template_sms(mobile, [sms_code, constants.SMS_CODE_REDIS_EXPIRES // 60], constants.SEND_SMS_TEMPLATE_ID)
