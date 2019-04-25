@@ -98,3 +98,11 @@ class MobileCountView(View):
         count = User.objects.filter(mobile=mobile).count()
 
         return http.JsonResponse({'count': count, 'code': RETCODE.OK, 'errmsg': 'OK'})
+
+
+class LoginView(View):
+    """用户账号登录"""
+
+    def get(self, request):
+        """提供登录界面"""
+        return render(request, 'login.html')
