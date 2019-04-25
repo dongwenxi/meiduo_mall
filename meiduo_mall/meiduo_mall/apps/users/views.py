@@ -2,9 +2,10 @@ from django.shortcuts import render, redirect
 from django.views import View
 from django import http
 import re
-from django.contrib.auth import login
+from django.contrib.auth import login, authenticate
 from django.db import DatabaseError
 from django_redis import get_redis_connection
+from django.conf import settings
 
 from .models import User
 import logging
@@ -106,3 +107,37 @@ class LoginView(View):
     def get(self, request):
         """提供登录界面"""
         return render(request, 'login.html')
+
+    def post(self, request):
+        """账户密码登录实现逻辑"""
+
+        # 接收用户名，密码
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        remembered = request.POST.get('remembered')
+
+        if all([username, password]) is False:
+            return http.HttpResponseForbidden('缺少必传参数')
+
+        # 校验
+        # user = User.objects.get(username=username)
+        # user.check_password(password)
+        # 登录认证
+        user = authenticate(username=username, password=password)
+        if user is None:
+            return render(request, 'login.html', {'account_errmsg': '用户名或密码错误'})
+
+        # if remembered != 'on':  # 没有勾选记住登录
+        #     settings.SESSION_COOKIE_AGE = 0  # 修改Django的SESSION缓存时长
+        # # 状态保持
+        # login(request, user)
+
+        # 实现状态保持
+        login(request, user)
+        # 设置状态保持的周期
+        if remembered != 'on':
+            # 没有记住用户：浏览器会话结束就过期, 默认是两周
+            request.session.set_expiry(0)
+
+        # 响应结果重定向到首页
+        return redirect('/')
