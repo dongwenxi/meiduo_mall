@@ -122,6 +122,9 @@ class LoginView(View):
         # 校验
         # user = User.objects.get(username=username)
         # user.check_password(password)
+        # if re.match(r'^1[3-9]\d{9}$', username):
+        #     User.USERNAME_FIELD = 'mobile'
+
         # 登录认证
         user = authenticate(username=username, password=password)
         if user is None:
