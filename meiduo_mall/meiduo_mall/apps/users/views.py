@@ -1,8 +1,8 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, reverse
 from django.views import View
 from django import http
 import re
-from django.contrib.auth import login, authenticate
+from django.contrib.auth import login, authenticate, logout
 from django.db import DatabaseError
 from django_redis import get_redis_connection
 from django.conf import settings
@@ -151,4 +151,18 @@ class LoginView(View):
         response.set_cookie('username', user.username, max_age=settings.SESSION_COOKIE_AGE)
 
         # 响应结果重定向到首页
+        return response
+
+
+class LogoutView(View):
+    """退出登录"""
+
+    def get(self, request):
+        # 清除session中的状态保持数据
+        logout(request)
+
+        # 清除cookie中的username
+        response = redirect(reverse('users:login'))
+        response.delete_cookie('username')
+        # 重定向到login界面
         return response
