@@ -11,6 +11,7 @@ from .models import User
 import logging
 from meiduo_mall.utils.response_code import RETCODE
 
+
 logger = logging.getLogger('django')  # 创建日志输出器对象
 
 # Create your views here.
@@ -74,9 +75,11 @@ class RegisterView(View):
 
         # 状态保持
         login(request, user)  # 存储用户的id到session中记录它的登录状态
+        response = redirect('/')  # 创建好响应对象
+        response.set_cookie('username', user.username, max_age=settings.SESSION_COOKIE_AGE)
 
-        # 注册成功重定向到首页
-        return redirect('/')
+        # 响应结果重定向到首页
+        return response
 
 
 class UsernameCountView(View):
@@ -127,6 +130,7 @@ class LoginView(View):
 
         # 登录认证
         user = authenticate(username=username, password=password)
+        # User.USERNAME_FIELD = 'username'
         if user is None:
             return render(request, 'login.html', {'account_errmsg': '用户名或密码错误'})
 
@@ -135,6 +139,7 @@ class LoginView(View):
         # # 状态保持
         # login(request, user)
 
+
         # 实现状态保持
         login(request, user)
         # 设置状态保持的周期
@@ -142,5 +147,8 @@ class LoginView(View):
             # 没有记住用户：浏览器会话结束就过期, 默认是两周
             request.session.set_expiry(0)
 
+        response = redirect('/')  # 创建好响应对象
+        response.set_cookie('username', user.username, max_age=settings.SESSION_COOKIE_AGE)
+
         # 响应结果重定向到首页
-        return redirect('/')
+        return response
