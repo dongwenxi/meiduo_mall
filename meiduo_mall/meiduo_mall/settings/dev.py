@@ -34,7 +34,7 @@ SECRET_KEY = '(9b_jkqg)11h8)*r$+%mbd&3q#n!u_6l98ytf71^3lq7fec9r%'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['www.meiduo.site']
 
 # Application definition
 # 注册/安装子应用: 当应用中使用到模型,需要迁移建表时,必须注册, 子应用中使用到模板时也需要注册
