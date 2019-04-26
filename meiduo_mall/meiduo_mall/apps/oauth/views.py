@@ -1,12 +1,13 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.views import View
 from django import http
 from QQLoginTool.QQtool import OAuthQQ
 from django.conf import settings
+from django.contrib.auth import login
 
 from meiduo_mall.utils.response_code import RETCODE
 import logging
-
+from .models import OAuthQQUser
 logger = logging.getLogger('django')
 
 
@@ -39,6 +40,7 @@ class OAuthUserView(View):
 
         # 获取查询字符串中的code
         code = request.GET.get('code')
+        state = request.GET.get('state', '/')
 
 
         # 创建QQ登录SDK对象
@@ -53,10 +55,24 @@ class OAuthUserView(View):
             # 调用SDK中的get_openid(access_token) 得到openid
             openid = oauth.get_open_id(access_token)
         except Exception as e:
-
             logger.error(e)
             return http.JsonResponse({'code': RETCODE.SERVERERR, 'errmsg': 'QQ服务器不可用'})
 
+        # 在OAuthQQUser表中查询openid
+        try:
+            oauth_model = OAuthQQUser.objects.get(openid=openid)
+        except OAuthQQUser.DoesNotExist:
+            # 如果在OAuthQQUser表中没有查询到openid, 没绑定说明第一个QQ登录
+            # 创建一个新的美多用户和QQ的openid绑定
+            return render(request, 'oauth_callback.html')
+        else:
+            # 如果在OAuthQQUser表中查询到openid,说明是已绑定过美多用户的QQ号
+            user = oauth_model.user
+            login(request, user)
+            # 直接登录成功:  状态操持,
+            response = redirect(state)
+            response.set_cookie('username', user.username, max_age=settings.SESSSION_COOKIE_AGE)
+            return response
 
 
-        return http.JsonResponse({'openid': openid})
+        # return http.JsonResponse({'openid': openid})
