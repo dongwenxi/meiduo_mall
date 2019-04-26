@@ -147,7 +147,7 @@ class LoginView(View):
             # 没有记住用户：浏览器会话结束就过期, 默认是两周
             request.session.set_expiry(0)
 
-        response = redirect('/')  # 创建好响应对象
+        response = redirect(request.GET.get('next', '/'))  # 创建好响应对象
         response.set_cookie('username', user.username, max_age=settings.SESSION_COOKIE_AGE)
 
         # 响应结果重定向到首页
@@ -166,3 +166,17 @@ class LogoutView(View):
         response.delete_cookie('username')
         # 重定向到login界面
         return response
+
+
+class UserInfoView(View):
+    """用户个人信息"""
+
+    def get(self, request):
+        """提供用户中心界面"""
+        # 判断当前用户是否登录,如果登录返回用户中心界面
+        # 如果用户没有登录,就重定义到登录
+        user = request.user  # 通过请求对象获取user
+        if user.is_authenticated:
+            return render(request, 'user_center_info.html')
+        else:
+            return redirect('/login/?next=/info/')
