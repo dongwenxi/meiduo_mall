@@ -215,3 +215,6 @@ AUTH_USER_MODEL = 'users.User'
 
 # 指定Django登录认证后端
 AUTHENTICATION_BACKENDS = ['users.utils.UsernameMobileAuthBackend']
+
+# 指定登录界面的路由
+LOGIN_URL = '/login/'

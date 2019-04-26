@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, reverse
 from django.views import View
 from django import http
 import re
-from django.contrib.auth import login, authenticate, logout
+from django.contrib.auth import login, authenticate, logout, mixins
 from django.db import DatabaseError
 from django_redis import get_redis_connection
 from django.conf import settings
@@ -10,6 +10,7 @@ from django.conf import settings
 from .models import User
 import logging
 from meiduo_mall.utils.response_code import RETCODE
+from django.contrib.auth.decorators import login_required
 
 
 logger = logging.getLogger('django')  # 创建日志输出器对象
@@ -168,15 +169,18 @@ class LogoutView(View):
         return response
 
 
-class UserInfoView(View):
+class UserInfoView(mixins.LoginRequiredMixin, View):
     """用户个人信息"""
 
     def get(self, request):
         """提供用户中心界面"""
         # 判断当前用户是否登录,如果登录返回用户中心界面
         # 如果用户没有登录,就重定义到登录
-        user = request.user  # 通过请求对象获取user
-        if user.is_authenticated:
-            return render(request, 'user_center_info.html')
-        else:
-            return redirect('/login/?next=/info/')
+        # user = request.user  # 通过请求对象获取user
+        # if user.is_authenticated:
+        #     return render(request, 'user_center_info.html')
+        # else:
+        #     return redirect('/login/?next=/info/')
+        # return redirect_to_login(self.request.get_full_path(), self.get_login_url(), self.get_redirect_field_name())
+
+        return render(request, 'user_center_info.html')
