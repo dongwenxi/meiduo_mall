@@ -211,6 +211,8 @@ class EmailView(mixins.LoginRequiredMixin, View):
         user.save()
 
         # 在此地还要发送一个邮件到email
-
+        from django.core.mail import send_mail
+        # send_mail(邮件主题, 普通邮件正文, 发件人邮箱, [收件人邮件], html_message='超文本邮件内容')
+        send_mail('美多', '', '美多商城<itcast99@163.com>', [email], html_message='收钱了')
         # 响应
         return http.JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK'})
