@@ -13,6 +13,7 @@ import logging
 from meiduo_mall.utils.response_code import RETCODE
 from celery_tasks.email.tasks import send_verify_email
 from .utils import generate_verify_email_url, check_token_to_user
+from meiduo_mall.utils.views import LoginRequiredView
 
 
 logger = logging.getLogger('django')  # 创建日志输出器对象
@@ -243,3 +244,11 @@ class VerifyEmailView(View):
 
         # 响应
         return redirect('/info/')
+
+
+
+class AddressView(LoginRequiredView):
+    """用户收货地址"""
+    def get(self, request):
+        """提供用户收货地址界面"""
+        return render(request, 'user_center_site.html')
