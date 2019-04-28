@@ -11,6 +11,8 @@ from django.contrib.auth.decorators import login_required
 from .models import User
 import logging
 from meiduo_mall.utils.response_code import RETCODE
+from celery_tasks.email.tasks import send_verify_email
+from .utils import generate_verify_email_url
 
 
 logger = logging.getLogger('django')  # 创建日志输出器对象
@@ -214,5 +216,9 @@ class EmailView(mixins.LoginRequiredMixin, View):
         # from django.core.mail import send_mail
         # # send_mail(邮件主题, 普通邮件正文, 发件人邮箱, [收件人邮件], html_message='超文本邮件内容')
         # send_mail('美多', '', '美多商城<itcast99@163.com>', [email], html_message='收钱了')
+        # verify_url = 'http://www.meiduo.site:8000/emails/verification/?token=2'
+        verify_url = generate_verify_email_url(user)  # 生成邮箱激活url
+        send_verify_email.delay(email, verify_url)
+
         # 响应
         return http.JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK'})
