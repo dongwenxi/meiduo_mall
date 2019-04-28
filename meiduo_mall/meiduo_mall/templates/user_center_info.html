@@ -123,10 +123,10 @@
     </div>
 </div>
 <script type="text/javascript">
-    let username = "{{ username }}";
-    let mobile = "{{ mobile }}";
-    let email = "{{ email }}";
-    let email_active = "{{ email_active }}";
+    let username = "{{ request.user.username }}";
+    let mobile = "{{ request.user.mobile }}";
+    let email = "{{ request.user.email }}";
+    let email_active = "{{ request.user.email_active }}";
 </script>
 <script type="text/javascript" src="{{ static('js/common.js') }}"></script>
 <script type="text/javascript" src="{{ static('js/user_center_info.js') }}"></script>
