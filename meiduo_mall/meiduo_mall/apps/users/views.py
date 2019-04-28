@@ -6,11 +6,11 @@ from django.contrib.auth import login, authenticate, logout, mixins
 from django.db import DatabaseError
 from django_redis import get_redis_connection
 from django.conf import settings
+from django.contrib.auth.decorators import login_required
 
 from .models import User
 import logging
 from meiduo_mall.utils.response_code import RETCODE
-from django.contrib.auth.decorators import login_required
 
 
 logger = logging.getLogger('django')  # 创建日志输出器对象
