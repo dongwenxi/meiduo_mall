@@ -8,6 +8,7 @@ from django.contrib.auth import login
 from meiduo_mall.utils.response_code import RETCODE
 import logging
 from .models import OAuthQQUser
+from .utils import generate_openid_signature
 logger = logging.getLogger('django')
 
 
@@ -38,6 +39,7 @@ class OAuthUserView(View):
 
     def get(self, request):
 
+
         # 获取查询字符串中的code
         code = request.GET.get('code')
         state = request.GET.get('state', '/')
@@ -63,8 +65,10 @@ class OAuthUserView(View):
             oauth_model = OAuthQQUser.objects.get(openid=openid)
         except OAuthQQUser.DoesNotExist:
             # 如果在OAuthQQUser表中没有查询到openid, 没绑定说明第一个QQ登录
+            # 先对openid进行加密
+            openid = generate_openid_signature(openid)
             # 创建一个新的美多用户和QQ的openid绑定
-            return render(request, 'oauth_callback.html')
+            return render(request, 'oauth_callback.html', {'openid': openid})
         else:
             # 如果在OAuthQQUser表中查询到openid,说明是已绑定过美多用户的QQ号
             user = oauth_model.user
