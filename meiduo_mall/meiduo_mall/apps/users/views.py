@@ -12,7 +12,7 @@ from .models import User
 import logging
 from meiduo_mall.utils.response_code import RETCODE
 from celery_tasks.email.tasks import send_verify_email
-from .utils import generate_verify_email_url
+from .utils import generate_verify_email_url, check_token_to_user
 
 
 logger = logging.getLogger('django')  # 创建日志输出器对象
@@ -222,3 +222,24 @@ class EmailView(mixins.LoginRequiredMixin, View):
 
         # 响应
         return http.JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK'})
+
+
+class VerifyEmailView(View):
+    """激活邮箱"""
+
+    def get(self, request):
+        """实现激活邮箱逻辑"""
+        # 获取token
+        token = request.GET.get('token')
+
+        # 解密并获取到user
+        user = check_token_to_user(token)
+        if user is None:
+            return http.HttpResponseForbidden('token无效')
+
+        # 修改当前user.email_active=True
+        user.email_active = True
+        user.save()
+
+        # 响应
+        return redirect('/info/')
