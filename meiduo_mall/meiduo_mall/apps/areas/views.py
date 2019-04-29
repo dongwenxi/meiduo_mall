@@ -33,4 +33,31 @@ class AreasView(View):
             return http.JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK', 'province_list': provinces_list})
         else:
             # 如果area_id 有值代表要查询指定省及下级行政区,查询指定市及下级行政区
-            pass
+            try:
+                area_model = Area.objects.get(id=area_id)  # 此模型有可能是某个省,也有可能是某个市
+            except Area.DoesNotExist:
+                return http.HttpResponseForbidden('area_id不存在')
+
+            subs_model_qs = area_model.subs.all()  # 获取下级所有行政区
+
+            sub_list = []  # 用来装下级行政区字典
+            for sub in subs_model_qs:
+                sub_dict = {
+                    'id': sub.id,
+                    'name': sub.name
+                }
+                sub_list.append(sub_dict)
+
+            area_datas = {
+                'id': area_model.id,
+                'name': area_model.name,
+                'subs': sub_list
+            }
+
+            return http.JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK', 'sub_data': area_datas})
+            # {
+            #     'id': area_model.id,
+            #     'name': area_model.name,
+            #     'subs_data': subs_list
+            # }
+
