@@ -465,3 +465,19 @@ class DefaultAddressView(LoginRequiredView):
 
         return http.JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK'})
 
+
+class UpdateTitleAddressView(LoginRequiredView):
+    """修改用户收货地址标题"""
+    def put(self, request, address_id):
+        try:
+            address = Address.objects.get(id=address_id)
+        except Address.DoesNotExist:
+            return http.HttpResponseForbidden('要修改的地址不存在')
+
+        json_dict = json.loads(request.body.decode())
+        title = json_dict.get('title')
+        address.title = title
+        address.save()
+
+        return http.JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK'})
+
