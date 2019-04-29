@@ -285,8 +285,8 @@ class CreateAddressView(LoginRequiredView):
         """新增收货地址逻辑"""
         user = request.user
         # 判断用户的收货地址数据,如果超过20个提前响应
-        # count = Address.objects.filter(user=user).count()
-        count = user.addresses.count()
+        count = Address.objects.filter(user=user, is_deleted=False).count()
+        # count = user.addresses.count()
         if count >= 20:
             return http.HttpResponseForbidden('用户收货地址上限')
         # 接收请求数据
@@ -434,3 +434,15 @@ class UpdateDestroyAddressView(LoginRequiredView):
         return http.JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK', 'address': address_dict})
         # 响应
 
+    def delete(self, request, address_id):
+        """对收货地址逻辑删除"""
+        try:
+            address = Address.objects.get(id=address_id)
+        except Address.DoesNotExist:
+            return http.HttpResponseForbidden('要删除的地址不存在')
+
+        address.is_deleted = True
+        # address.delete()
+        address.save()
+
+        return http.JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK'})
