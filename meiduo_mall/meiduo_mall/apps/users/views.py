@@ -446,3 +446,22 @@ class UpdateDestroyAddressView(LoginRequiredView):
         address.save()
 
         return http.JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK'})
+
+
+
+class DefaultAddressView(LoginRequiredView):
+    """设置默认地址"""
+
+    def put(self, request, address_id):
+        """实现默认地址"""
+        try:
+            address = Address.objects.get(id=address_id)
+        except Address.DoesNotExist:
+            return http.HttpResponseForbidden('要修改的地址不存在')
+
+        user = request.user
+        user.default_address = address
+        user.save()
+
+        return http.JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK'})
+
