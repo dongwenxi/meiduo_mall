@@ -481,3 +481,11 @@ class UpdateTitleAddressView(LoginRequiredView):
 
         return http.JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK'})
 
+
+
+
+class ChangePasswordView(LoginRequiredView):
+    """修改密码"""
+
+    def get(self, request):
+        return render(request, 'user_center_pass.html')
