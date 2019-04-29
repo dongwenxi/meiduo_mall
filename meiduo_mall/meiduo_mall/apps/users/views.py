@@ -8,15 +8,15 @@ from django_redis import get_redis_connection
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 
-from .models import User
+from .models import User, Address
 import logging
 from meiduo_mall.utils.response_code import RETCODE
 from celery_tasks.email.tasks import send_verify_email
 from .utils import generate_verify_email_url, check_token_to_user
 from meiduo_mall.utils.views import LoginRequiredView
 
-
 logger = logging.getLogger('django')  # 创建日志输出器对象
+
 
 # Create your views here.
 class RegisterView(View):
@@ -76,7 +76,6 @@ class RegisterView(View):
             logger.error(e)
             return render(request, 'register.html', {'register_errmsg': '用户注册失败'})
 
-
         # 状态保持
         login(request, user)  # 存储用户的id到session中记录它的登录状态
         response = redirect('/')  # 创建好响应对象
@@ -90,7 +89,6 @@ class UsernameCountView(View):
     """判断用户名是否已注册"""
 
     def get(self, request, username):
-
         # 查询当前用户名的个数要么0要么1 1代表重复
         count = User.objects.filter(username=username).count()
 
@@ -101,7 +99,6 @@ class MobileCountView(View):
     """判断手机号是否已注册"""
 
     def get(self, request, mobile):
-
         # 查询当前手机号的个数要么0要么1 1代表重复
         count = User.objects.filter(mobile=mobile).count()
 
@@ -142,7 +139,6 @@ class LoginView(View):
         #     settings.SESSION_COOKIE_AGE = 0  # 修改Django的SESSION缓存时长
         # # 状态保持
         # login(request, user)
-
 
         # 实现状态保持
         login(request, user)
@@ -205,7 +201,6 @@ class EmailView(mixins.LoginRequiredMixin, View):
         if not re.match(r'^[a-z0-9][\w\.\-]*@[a-z0-9\-]+(\.[a-z]{2,5}){1,2}$', email):
             return http.HttpResponseForbidden('邮箱格式有误')
 
-
         # 获取到user
         user = request.user
         # 设置user.email字段
@@ -246,9 +241,93 @@ class VerifyEmailView(View):
         return redirect('/info/')
 
 
-
 class AddressView(LoginRequiredView):
     """用户收货地址"""
+
     def get(self, request):
         """提供用户收货地址界面"""
         return render(request, 'user_center_site.html')
+
+
+class CreateAddressView(LoginRequiredView):
+    """新增收货地址"""
+
+    def post(self, request):
+        """新增收货地址逻辑"""
+        user = request.user
+        # 判断用户的收货地址数据,如果超过20个提前响应
+        # count = Address.objects.filter(user=user).count()
+        count = user.addresses.count()
+        if count >= 20:
+            return http.HttpResponseForbidden('用户收货地址上限')
+        # 接收请求数据
+        json_dict = json.loads(request.body.decode())
+        """
+            title: '',
+            receiver: '',
+            province_id: '',
+            city_id: '',
+            district_id: '',
+            place: '',
+            mobile: '',
+            tel: '',
+            email: '',
+        """
+        title = json_dict.get('title')
+        receiver = json_dict.get('receiver')
+        province_id = json_dict.get('province_id')
+        city_id = json_dict.get('city_id')
+        district_id = json_dict.get('district_id')
+        place = json_dict.get('place')
+        mobile = json_dict.get('mobile')
+        tel = json_dict.get('tel')
+        email = json_dict.get('email')
+
+        # 校验
+        if all([title, receiver, province_id, city_id, district_id, place, mobile]) is False:
+            return http.HttpResponseForbidden('缺少必传参数')
+
+        if not re.match(r'^1[3-9]\d{9}$', mobile):
+            return http.HttpResponseForbidden('参数mobile有误')
+        if tel:
+            if not re.match(r'^(0[0-9]{2,3}-)?([2-9][0-9]{6,7})+(-[0-9]{1,4})?$', tel):
+                return http.HttpResponseForbidden('参数tel有误')
+        if email:
+            if not re.match(r'^[a-z0-9][\w\.\-]*@[a-z0-9\-]+(\.[a-z]{2,5}){1,2}$', email):
+                return http.HttpResponseForbidden('参数email有误')
+
+        # 新增
+        try:
+            address = Address.objects.create(
+                user=user,
+                title=title,
+                receiver=receiver,
+                province_id=province_id,
+                city_id=city_id,
+                district_id=district_id,
+                place=place,
+                mobile=mobile,
+                tel=tel,
+                email=email,
+            )
+        except Exception:
+            return http.HttpResponseForbidden('新增地址出错')
+
+        # 把新增的地址数据响应回去
+        address_dict = {
+            'id': address.id,
+            'title': address.title,
+            'receiver': address.receiver,
+            'province_id': address.province_id,
+            'province': address.province.name,
+            'city_id': address.city_id,
+            'city': address.city.name,
+            'district_id': address.district_id,
+            'district': address.district.name,
+            'place': address.place,
+            'mobile': address.mobile,
+            'tel': address.tel,
+            'email': address.email,
+        }
+        return http.JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK', 'address': address_dict})
+

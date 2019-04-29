@@ -10,6 +10,7 @@ class User(AbstractUser):
     mobile = models.CharField(max_length=11, unique=True, verbose_name='手机号')
     # 如果模型对应的表已经存在,并且表中已有数据,那么新追加的字段必须给默认值,或可以为None,不然迁移就报错
     email_active = models.BooleanField(default=False, verbose_name='邮箱激活状态')
+    default_address = models.ForeignKey('Address', related_name='users', null=True, blank=True, on_delete=models.SET_NULL, verbose_name='默认地址')
 
     class Meta:  # 元类
         db_table = 'tb_users'
