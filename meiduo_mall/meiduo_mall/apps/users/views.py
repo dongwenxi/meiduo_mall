@@ -246,7 +246,34 @@ class AddressView(LoginRequiredView):
 
     def get(self, request):
         """提供用户收货地址界面"""
-        return render(request, 'user_center_site.html')
+        # 获取当前用户的所有收货地址
+        user = request.user
+        # address = user.addresses.filter(is_deleted=False)  # 获取当前用户的所有收货地址
+        address_qs = Address.objects.filter(is_deleted=False, user=user)  # 获取当前用户的所有收货地址
+
+        address_list = []
+        for address in address_qs:
+            address_dict = {
+                'id': address.id,
+                'title': address.title,
+                'receiver': address.receiver,
+                'province_id': address.province_id,
+                'province': address.province.name,
+                'city_id': address.city_id,
+                'city': address.city.name,
+                'district_id': address.district_id,
+                'district': address.district.name,
+                'place': address.place,
+                'mobile': address.mobile,
+                'tel': address.tel,
+                'email': address.email,
+            }
+            address_list.append(address_dict)
+
+        context = {
+            'addresses': address_list
+        }
+        return render(request, 'user_center_site.html', context)
 
 
 class CreateAddressView(LoginRequiredView):
@@ -310,6 +337,9 @@ class CreateAddressView(LoginRequiredView):
                 tel=tel,
                 email=email,
             )
+            # if user.default_address is None:
+            #     user.default_address = address
+            #     user.save()
         except Exception:
             return http.HttpResponseForbidden('新增地址出错')
 
