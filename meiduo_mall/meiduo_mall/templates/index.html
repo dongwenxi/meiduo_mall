@@ -97,10 +97,14 @@
 		<ul class="points">
 		</ul>
 		<ul class="sub_menu">
-
+            
+            {% for group in categories.values() %}
 			<li>
 				<div class="level1">
-					<a href="http://shouji.jd.com/">手机</a>
+					{% for cat1 in group.channels %}
+					<a href="{{ cat1.url }}">{{ cat1.name }}</a>
+					{% endfor %}
+					
 				</div>
 				<div class="level2">
 
@@ -114,6 +118,7 @@
 
 				</div>
 			</li>
+            {% endfor %}
 
 		</ul>
 
