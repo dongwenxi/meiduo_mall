@@ -242,3 +242,4 @@ EMAIL_VERIFY_URL = 'http://www.meiduo.site:8000/emails/verification/'
 
 # 修改Django的文件存储类
 DEFAULT_FILE_STORAGE = 'meiduo_mall.utils.fastdfs.fdfs_storage.FastDFSStorage'
+FDFS_BASE_URL = 'http://192.168.103.210:8888/'  # FastDFS中sotrage(nginx) ip和端口
