@@ -36,6 +36,7 @@ class ListView(View):
         # a = (page_num - 1) * 5
         # b = a + 5
         # 查询当前三级类别下面的所有sku
+        # order_by(只能放当前查询集中每个模型中的字段)
         sku_qs = category.sku_set.filter(is_launched=True).order_by(sort_fields)
 
         # 创建分页对象
