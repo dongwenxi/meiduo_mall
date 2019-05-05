@@ -43,13 +43,12 @@ class IndexView(View):
             contents[category.key] = category.content_set.filter(status=True).order_by('sequence')
 
 
-
-
         context = {
             'categories': get_categories(),
             'contents': contents
 
         }
+
 
 
 
