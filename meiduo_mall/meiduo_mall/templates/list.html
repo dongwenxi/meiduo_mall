@@ -74,37 +74,7 @@
             <div class="sub_menu_con fl">
                 <h1 class="fl">商品分类</h1>
                 <ul class="sub_menu">
-                    {#					<li>#}
-                    {#						<div class="level1">#}
-                    {#							<a href="http://shouji.jd.com/">手机</a><a href="#">运营商</a><a href="#">数码</a>#}
-                    {#						</div>#}
-                    {#						<div class="level2">#}
-                    {#							<div class="list_group">#}
-                    {#								<div class="group_name fl">手机通讯 &gt;</div>#}
-                    {#								<div class="group_detail fl">#}
-                    {#									<a href="list.html">手机</a>#}
-                    {#									<a href="#">对讲机</a>#}
-                    {#									<a href="#">以旧换新</a>#}
-                    {#									<a href="#">手机维修</a>#}
-                    {#								</div>						#}
-                    {#							</div>#}
-                    {#							<div class="list_group">#}
-                    {#								<div class="group_name fl">运营商 &gt;</div>#}
-                    {#								<div class="group_detail fl">#}
-                    {#									<a href="#">合约机</a>#}
-                    {#									<a href="#">选号码</a>#}
-                    {#									<a href="#">固话宽带</a>#}
-                    {#									<a href="#">办套餐</a>#}
-                    {#									<a href="#">充话费/流量</a>#}
-                    {#									<a href="#">中国电信</a>#}
-                    {#									<a href="#">中国移动</a>#}
-                    {#									<a href="#">中国联通</a>#}
-                    {#									<a href="#">京东通信</a>#}
-                    {#									<a href="#">170选号</a>#}
-                    {#								</div>												#}
-                    {#							</div>#}
-                    {#						</div>#}
-                    {#					</li>#}
+
                     {% for category in categories.values() %}
                         <li>
                             <div class="level1">
@@ -113,11 +83,11 @@
                                 {% endfor %}
                             </div>
                             <div class="level2">
-                                {% for sub_cat in category.sub_cats %}
+                                {% for sub_cat in category.cat_subs %}
                                     <div class="list_group">
                                         <div class="group_name fl">{{ sub_cat.name }} &gt;</div>
                                         <div class="group_detail fl">
-                                            {% for sub_cat3 in sub_cat.sub_cats %}
+                                            {% for sub_cat3 in sub_cat.cat_subs %}
                                                 <a href="/list/{{ sub_cat3.id }}/1/">{{ sub_cat3.name }}</a>
                                             {% endfor %}
                                         </div>
