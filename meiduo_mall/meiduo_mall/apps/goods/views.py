@@ -53,3 +53,10 @@ class ListView(View):
         }
 
         return render(request, 'list.html', context)
+
+
+class HotGoodsView(View):
+    """热销排行数据"""
+
+    def get(self, request, category_id):
+        pass
