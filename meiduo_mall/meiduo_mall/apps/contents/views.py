@@ -43,6 +43,12 @@ class IndexView(View):
 
             categories[group_id]['channels'].append(cat1)
 
+            cat2_qs = cat1.subs.all()  # 获取当前一组下面的所有二级数据
+            for cat2 in cat2_qs:  # 遍历二级数据查询集
+                cat3_qs = cat2.subs.all()
+                cat2.cat_subs = cat3_qs  # 把二级下面的所有三级绑定给cat2对象的cat_subs属性
+                categories[group_id]['cat_subs'].append(cat2)
+
 
 
 
