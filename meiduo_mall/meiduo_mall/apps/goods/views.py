@@ -6,6 +6,7 @@ from django.core.paginator import Paginator
 from contents.utils import get_categories
 from .models import GoodsCategory
 from .utils import get_breadcrumb
+from meiduo_mall.utils.response_code import RETCODE
 
 
 class ListView(View):
@@ -59,4 +60,25 @@ class HotGoodsView(View):
     """热销排行数据"""
 
     def get(self, request, category_id):
-        pass
+
+        try:
+            category = GoodsCategory.objects.get(id=category_id)
+        except GoodsCategory.DoesNotExist:
+            return http.HttpResponseNotFound('商品类别不存在')
+
+        # 获取当前三级类别下面销量最高的前两个sku
+        skus_qs = category.sku_set.filter(is_launched=True).order_by('-sales')[0:2]
+
+        hot_skus = []  # 包装两个热销商品字典
+        for sku in skus_qs:
+            hot_skus.append({
+                'id': sku.id,
+                'name': sku.name,
+                'price': sku.price,
+                'default_image_url': sku.default_image.url
+            })
+
+        return http.JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK', 'hot_skus': hot_skus})
+
+
+
