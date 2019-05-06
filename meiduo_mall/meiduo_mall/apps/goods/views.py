@@ -97,6 +97,12 @@ class DetailView(View):
         # 查询当前sku所对应的spu
         spu = sku.spu
 
+        spu_spec_qs = spu.specs.order_by('id')  # 获取当前spu中的所有规格
+        for spec in spu_spec_qs:  # 遍历当前所有的规格
+            spec.spec_options = spec.options.all() # 把规格下的所有选项绑定到规格对象的spec_options属性上
+
+
+
 
         context = {
             'categories': get_categories(), # 商品分类
@@ -104,6 +110,7 @@ class DetailView(View):
             'sku': sku,  # 当前要显示的sku模型对象
             'category': category,  # 当前的显示sku所属的三级类别
             'spu': spu,  # sku所属的spu
+            'spec_qs': spu_spec_qs,   # 当前商品的所有规格数据
         }
         return render(request, 'detail.html', context)
         pass

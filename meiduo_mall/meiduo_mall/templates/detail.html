@@ -131,22 +131,20 @@
                     <a @click="on_minus" class="minus fr">-</a>
                 </div>
             </div>
+
+
+            {% for spec in spec_qs %}
             <div class="type_select">
-                <label>屏幕尺寸:</label>
-                <a href="javascript:;" class="select">13.3英寸</a>
-                <a href="javascript:;">15.4英寸</a>
+                <label>{{ spec.name }}:</label>
+                {% for option in spec.spec_options %}
+                    <a href="/detail/{{ option.sku_id }}/" class="">{{ option.value }}</a>
+                {% endfor %}
             </div>
-            <div class="type_select">
-                <label>颜色:</label>
-                <a href="javascript:;" class="select">深灰色</a>
-                <a href="javascript:;">银</a>
-            </div>
-            <div class="type_select">
-                <label>版本:</label>
-                <a href="javascript:;" class="select">core i5/8G内存/256G存储</a>
-                <a href="javascript:;">core i5/8G内存/128G存储</a>
-                <a href="javascript:;">core i5/8G内存/512G存储/Multi-Touch Bar</a>
-            </div>
+            {% endfor %}
+
+
+
+
             <div class="total">总价：<em>[[ sku_amount ]]元</em></div>
             <div class="operate_btn">
                 <a href="javascript:;" class="add_cart" id="add_cart">加入购物车</a>
