@@ -97,10 +97,40 @@ class DetailView(View):
         # 查询当前sku所对应的spu
         spu = sku.spu
 
-        spu_spec_qs = spu.specs.order_by('id')  # 获取当前spu中的所有规格
-        for spec in spu_spec_qs:  # 遍历当前所有的规格
-            spec.spec_options = spec.options.all() # 把规格下的所有选项绑定到规格对象的spec_options属性上
 
+        # 获取出当前正显示的sku商品的规格选项id列表
+        current_sku_spec_qs = sku.specs.order_by('spec_id')
+        current_sku_option_ids = []  # [8, 11]
+        for current_sku_spec in current_sku_spec_qs:
+            current_sku_option_ids.append(current_sku_spec.option_id)
+
+        # 构造规格选择仓库
+        temp_sku_qs = spu.sku_set.all()  # 获取当前spu下的所有sku
+        # 选项仓库大字典
+        spec_sku_map = {}  # {(8, 11): 3, (8, 12): 4, (9, 11): 5, (9, 12): 6, (10, 11): 7, (10, 12): 8}
+        for temp_sku in temp_sku_qs:
+            # 查询每一个sku的规格数据
+            temp_spec_qs = temp_sku.specs.order_by('spec_id')
+            temp_sku_option_ids = []  # 用来包装每个sku的选项值
+            for temp_spec in temp_spec_qs:
+                temp_sku_option_ids.append(temp_spec.option_id)
+            spec_sku_map[tuple(temp_sku_option_ids)] = temp_sku.id
+
+
+
+
+
+
+        spu_spec_qs = spu.specs.order_by('id')  # 获取当前spu中的所有规格
+
+        for index, spec in enumerate(spu_spec_qs):  # 遍历当前所有的规格
+            spec_option_qs = spec.options.all()  # 获取当前规格中的所有选项
+            temp_option_ids = current_sku_option_ids[:]  # 复制一个新的当前显示商品的规格选项列表
+            for option in spec_option_qs:  # 遍历当前规格下的所有选项
+                temp_option_ids[index] = option.id  # [8, 12]
+                option.sku_id = spec_sku_map.get(tuple(temp_option_ids))  # 给每个选项对象绑定下他sku_id属性
+
+            spec.spec_options = spec_option_qs  # 把规格下的所有选项绑定到规格对象的spec_options属性上
 
 
 

@@ -134,12 +134,19 @@
 
 
             {% for spec in spec_qs %}
-            <div class="type_select">
-                <label>{{ spec.name }}:</label>
-                {% for option in spec.spec_options %}
-                    <a href="/detail/{{ option.sku_id }}/" class="">{{ option.value }}</a>
-                {% endfor %}
-            </div>
+                <div class="type_select">
+                    <label>{{ spec.name }}:</label>
+                    {% for option in spec.spec_options %}
+                        {% if option.sku_id == sku.id %}
+                            <a href="#" class="select">{{ option.value }}</a>
+                        {% elif option.sku_id %}
+                            <a href="/detail/{{ option.sku_id }}/">{{ option.value }}</a>
+                        {% else %}
+                            <a href="#" style="border: #9f9f9f dashed 1px" title="此商品无货">{{ option.value }}</a>
+
+                        {% endif %}
+                    {% endfor %}
+                </div>
             {% endfor %}
 
 
