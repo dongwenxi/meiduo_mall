@@ -4,7 +4,7 @@ from django import http
 from django.core.paginator import Paginator
 
 from contents.utils import get_categories
-from .models import GoodsCategory
+from .models import GoodsCategory, SKU
 from .utils import get_breadcrumb
 from meiduo_mall.utils.response_code import RETCODE
 
@@ -80,6 +80,33 @@ class HotGoodsView(View):
             })
 
         return http.JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK', 'hot_skus': hot_skus})
+
+
+class DetailView(View):
+    """商品详情界面"""
+
+    def get(self, request, sku_id):
+
+        try:
+            sku = SKU.objects.get(id=sku_id)
+        except SKU.DoesNotExist:
+            return render(request, '404.html')
+
+        category = sku.category  # 获取当前sku所对应的三级分类
+
+        # 查询当前sku所对应的spu
+        spu = sku.spu
+
+
+        context = {
+            'categories': get_categories(), # 商品分类
+            'breadcrumb': get_breadcrumb(category),  # 面包屑导航
+            'sku': sku,  # 当前要显示的sku模型对象
+            'category': category,  # 当前的显示sku所属的三级类别
+            'spu': spu,  # sku所属的spu
+        }
+        return render(request, 'detail.html', context)
+        pass
 
 
 
