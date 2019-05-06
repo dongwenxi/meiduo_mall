@@ -31,7 +31,6 @@ class IndexView(View):
 
         contents = {}  # 用来装所有广告数据的字典
 
-
         """
         {
             'index_lbt': lbt_qs,
@@ -42,14 +41,10 @@ class IndexView(View):
         for category in contentCategory_qs:
             contents[category.key] = category.content_set.filter(status=True).order_by('sequence')
 
-
         context = {
             'categories': get_categories(),
             'contents': contents
 
         }
-
-
-
 
         return render(request, 'index.html', context)
