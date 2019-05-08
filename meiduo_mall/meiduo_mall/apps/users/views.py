@@ -14,6 +14,8 @@ from meiduo_mall.utils.response_code import RETCODE
 from celery_tasks.email.tasks import send_verify_email
 from .utils import generate_verify_email_url, check_token_to_user
 from meiduo_mall.utils.views import LoginRequiredView
+from goods.models import SKU
+
 
 logger = logging.getLogger('django')  # 创建日志输出器对象
 
@@ -482,8 +484,6 @@ class UpdateTitleAddressView(LoginRequiredView):
         return http.JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK'})
 
 
-
-
 class ChangePasswordView(LoginRequiredView):
     """修改密码"""
 
@@ -522,3 +522,43 @@ class ChangePasswordView(LoginRequiredView):
         response.delete_cookie('username')
 
         return response
+
+
+class UserBrowseHistory(View):
+    """用户商品浏览记录"""
+
+    def post(self, request):
+
+        # 判断当前用户是否登录
+        user = request.user
+        if not user.is_authenticated:
+            return http.JsonResponse({'code': RETCODE.SESSIONERR, 'errmsg': '用户未登录'})
+
+        # 获取请求体中的sku_id
+        json_dict = json.loads(request.body.decode())
+        sku_id = json_dict.get('sku_id')
+
+        # 校验sku_id
+        try:
+            sku = SKU.objects.get(id=sku_id)
+        except SKU.DoesNotExist:
+            return http.HttpResponseForbidden('sku_id不存在')
+
+        # 创建redis连接对象
+        redis_conn = get_redis_connection('history')
+        pl = redis_conn.pipeline()
+
+        key = 'history_%s' % user.id
+        # 先去重
+        pl.lrem(key, 0, sku_id)
+
+        # 存储到列表的开头
+        pl.lpush(key, sku_id)
+
+        # 截取前5个
+        pl.ltrim(key, 0, 4)
+        # 执行管道
+        pl.execute()
+
+        # 响应
+        return http.JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK'})

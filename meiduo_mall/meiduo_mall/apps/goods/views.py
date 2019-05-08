@@ -162,7 +162,7 @@ class DetailVisitView(View):
         today_date = timezone.localdate()
         try:
 
-            # 查询当前类别今天没有没统计过
+            # 查询当前类别今天没有没统计过  # 注意不要写成data了
             count_data = GoodsVisitCount.objects.get(category=category, date=today_date)
         except GoodsVisitCount.DoesNotExist:
             # 如果当前类别今天是第一次来统计,就创建一个新记录,并给它指定是统计那一个类别
