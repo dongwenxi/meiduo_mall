@@ -243,7 +243,6 @@ class VerifyEmailView(View):
         return redirect('/info/')
 
 
-
 class AddressView(LoginRequiredView):
     """用户收货地址"""
 
@@ -562,3 +561,27 @@ class UserBrowseHistory(View):
 
         # 响应
         return http.JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK'})
+
+    def get(self, request):
+        """浏览记录查询"""
+
+        # 创建redis连接对象
+        redis_conn = get_redis_connection('history')
+        sku_id_list = redis_conn.lrange('history_%s' % request.user.id, 0, -1)
+        # 获取当前登录用户的浏览记录列表数据 [sku_id1, sku_id2]
+
+        # 通过sku_id查询sku,再将sku模型转换成字典
+        # sku_qs = SKU.objects.filter(id__in=sku_id_list)  [b'3', b'2', b'5'] [2, 3, 5]
+        skus = []  # 用来装每一个sku字典
+        for sku_id in sku_id_list:
+            sku = SKU.objects.get(id=sku_id)
+            sku_dict = {
+                'id': sku.id,
+                'name': sku.name,
+                'default_image_url': sku.default_image.url,
+                'price': sku.price
+            }
+            skus.append(sku_dict)
+        # 响应
+        return http.JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK', 'skus': skus})
+
