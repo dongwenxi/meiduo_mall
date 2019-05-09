@@ -215,7 +215,6 @@ class CartsView(View):
 
             pl.execute()
 
-
             # 响应
             # return http.JsonResponse({'code': RETCODE.OK, 'errmsg': '修改购物车数据成功', 'cart_sku': cart_sku})
 
@@ -257,5 +256,48 @@ class CartsView(View):
         # 响应
         return response
 
+    def delete(self, request):
+        """删除购物车数据"""
+        # 接收sku_id
+        json_dict = json.loads(request.body.decode())
+        sku_id = json_dict.get('sku_id')
+        # 校验
+        try:
+            sku = SKU.objects.get(id=sku_id)
+        except SKU.DoesNotExist:
+            return http.HttpResponseForbidden('sku不存在')
 
+        # 判断是否登录
+        user = request.user
+        if user.is_authenticated:
+            # 登录操作redis数据
+            pass
+        else:
+            # 未登录操作cookie数据
+            # 获取cookie数据
+            cart_str = request.COOKIES.get('carts')
+
+            # 判断cookie是否获取到
+            if cart_str:
+                # 把字符串转换成字典
+                cart_dict = pickle.loads(base64.b64decode(cart_str.encode()))
+            else:
+                # 没有获取cookie数据 直接返回
+                return http.JsonResponse({'code': RETCODE.DBERR, 'errmsg': 'cookie没有获取到'})
+            # 判断当前要删除的sku_id在字典中是否存在
+            if sku_id in cart_dict:
+                # del cart_dict[sku_id]
+                del cart_dict[sku_id]
+
+            response = http.JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK'})
+            if len(cart_dict.keys()) == 0:  # 如果cookie中的购物车数据已经删除完了
+                response.delete_cookie('carts')  # 删除cookie
+
+
+            # 将字典转换成字符串
+            cart_str = base64.b64encode(pickle.dumps(cart_dict)).decode()
+            # 设置cookie
+            response.set_cookie('carts', cart_str)
+            # 响应
+            return response
 
