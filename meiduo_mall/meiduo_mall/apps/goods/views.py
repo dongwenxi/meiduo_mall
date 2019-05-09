@@ -167,9 +167,10 @@ class DetailVisitView(View):
         except GoodsVisitCount.DoesNotExist:
             # 如果当前类别今天是第一次来统计,就创建一个新记录,并给它指定是统计那一个类别
             count_data = GoodsVisitCount(
-                category=category
+                category=category,
 
             )
+
 
         count_data.count += 1  # 累加浏览量
         count_data.save()

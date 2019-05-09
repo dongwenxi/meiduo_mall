@@ -97,3 +97,42 @@ class CartsView(View):
             # 响应
             response.set_cookie('carts', cart_str)
         return response
+
+    def get(self, request):
+        """购物车数据展示"""
+
+        user = request.user
+        if user.is_authenticated:
+            """登录用户获取redis购物车数据
+            hash: {sku_id_1: count, sku_id2: count}
+            set: {sku_id_1, sku_id_2}
+            """
+            # 创建redis连接对象
+            redis_conn = get_redis_connection('carts')
+            # 获取hash数据
+            redis_cart = redis_conn.hgetall('carts_%s' % user.id)
+
+            # 获取set数据{b'1', b'2'}
+            selected_ids = redis_conn.smembers('selected_%s' % user.id)
+            # 将redis购物车数据格式转换成和cookie购物车数据格式一致  目的为了后续数据查询转换代码和cookie共用一套代码
+            cart_dict = {}
+            for sku_id_bytes, count_bytes in redis_cart.items():
+                cart_dict[int(sku_id_bytes)] = {
+                    'count': int(count_bytes),
+                    'selected': sku_id_bytes in selected_ids
+                }
+
+        else:
+            """未登录用户获取cookie购物车数据"""
+            """
+            {
+                sku_id_1: {'count': 2, 'selected': True},
+                sku_id_2: {'count': 2, 'selected': True}
+            }
+            """
+
+        context = {
+            'cart_skus': ''
+        }
+
+        return render(request, 'cart.html', context)
