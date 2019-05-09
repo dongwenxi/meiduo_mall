@@ -130,9 +130,38 @@ class CartsView(View):
                 sku_id_2: {'count': 2, 'selected': True}
             }
             """
+            # 获取cookie购物车数据
+            cart_str = request.COOKIES.get('carts')
+            # 判断有没有cookie购物车数据
+            if cart_str:
+                # 将字符串转换成字典
+                cart_dict = pickle.loads(base64.b64decode(cart_str.encode()))
+            else:
+                return render(request, 'cart.html')
+
+        """
+       {
+           sku_id_1: {'count': 2, 'selected': True},
+           sku_id_2: {'count': 2, 'selected': True}
+       }
+       """
+        # 查询到购物车中所有sku_id对应的sku模型
+        sku_qs = SKU.objects.filter(id__in=cart_dict.keys())
+        cart_skus = []  # 用来装每个转换好的sku字典
+        for sku in sku_qs:
+            sku_dict = {
+                'id': sku.id,
+                'name': sku.name,
+                'price': str(sku.price),
+                'default_image_url': sku.default_image.url,
+                'count': str(cart_dict[sku.id]['count']),  # 方便js中的json对数据渲染
+                'selected': str(cart_dict[sku.id]['selected']),
+                'amount': str(sku.price * cart_dict[sku.id]['count'])
+            }
+            cart_skus.append(sku_dict)
 
         context = {
-            'cart_skus': ''
+            'cart_skus': cart_skus
         }
 
         return render(request, 'cart.html', context)
