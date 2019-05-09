@@ -154,7 +154,7 @@ class CartsView(View):
                 'name': sku.name,
                 'price': str(sku.price),
                 'default_image_url': sku.default_image.url,
-                'count': str(cart_dict[sku.id]['count']),  # 方便js中的json对数据渲染
+                'count': int(cart_dict[sku.id]['count']),  # 方便js中的json对数据渲染
                 'selected': str(cart_dict[sku.id]['selected']),
                 'amount': str(sku.price * int(cart_dict[sku.id]['count']))
             }
@@ -183,10 +183,43 @@ class CartsView(View):
             return http.HttpResponseForbidden('sku不存在')
 
         user = request.user
+        # 响应给前端修改后的sku数据
+        cart_sku = {
+            'id': sku.id,
+            'name': sku.name,
+            'price': sku.price,
+            'default_image_url': sku.default_image.url,
+            'count': int(count),
+            'selected': selected,
+            'amount': sku.price * int(count)  # 注意count类型问题
+        }
+        # count 2
+        # sku_id2    {2}
+        response = http.JsonResponse({'code': RETCODE.OK, 'errmsg': '修改购物车数据成功', 'cart_sku': cart_sku})
         if user.is_authenticated:
 
             # 登录用户修改redis购物车数据
-            pass
+            # 创建redis连接对象
+            redis_conn = get_redis_connection('carts')
+            pl = redis_conn.pipeline()
+
+            # hset  # 覆盖hash中的数据
+            pl.hset('carts_%s' % user.id, sku_id, count)
+            # 判断selected是True还是False
+            if selected:
+                # 将勾选的sku_id存储到set集合
+                pl.sadd('selected_%s' % user.id, sku_id)
+            else:
+                # 不勾选时,将sku_id从set集合中移除
+                pl.srem('selected_%s' % user.id, sku_id)
+
+            pl.execute()
+
+
+            # 响应
+            # return http.JsonResponse({'code': RETCODE.OK, 'errmsg': '修改购物车数据成功', 'cart_sku': cart_sku})
+
+
         else:
             # 未登录用户修改cookie购物车数据
 
@@ -200,7 +233,6 @@ class CartsView(View):
                 # 如果cookie购物车没有数据
                 return http.JsonResponse({'code': RETCODE.DBERR, 'errmsg': 'cookie数据没有获取'})
 
-
             # 修改购物车大字典数据,新值覆盖旧值
             cart_dict[sku_id] = {
                 'count': count,
@@ -209,21 +241,21 @@ class CartsView(View):
             # 将字典转换成字符串
             cart_str = base64.b64encode(pickle.dumps(cart_dict)).decode()
 
-            cart_sku = {
-                'id': sku.id,
-                'name': sku.name,
-                'price': sku.price,
-                'default_image_url': sku.default_image.url,
-                'count': count,
-                'selected': selected,
-                'amount': sku.price * int(count)  # 注意count类型问题
-            }
+            # cart_sku = {
+            #     'id': sku.id,
+            #     'name': sku.name,
+            #     'price': sku.price,
+            #     'default_image_url': sku.default_image.url,
+            #     'count': count,
+            #     'selected': selected,
+            #     'amount': sku.price * int(count)  # 注意count类型问题
+            # }
 
             # 设置cookie
-            response = http.JsonResponse({'code': RETCODE.OK, 'errmsg': '修改购物车数据成功', 'cart_sku': cart_sku})
+            # response = http.JsonResponse({'code': RETCODE.OK, 'errmsg': '修改购物车数据成功', 'cart_sku': cart_sku})
             response.set_cookie('carts', cart_str)
-            # 响应
-            return response
+        # 响应
+        return response
 
 
-        pass
+
