@@ -2,7 +2,7 @@ from django.shortcuts import render
 from django.views import View
 import json, pickle, base64
 from django import http
-
+from django_redis import get_redis_connection
 
 from goods.models import SKU
 from meiduo_mall.utils.response_code import RETCODE
@@ -31,9 +31,31 @@ class CartsView(View):
 
         # 判断当用户是否登录还是未登录
         user = request.user
+        response = http.JsonResponse({'code': RETCODE.OK, 'errmsg': '添加购物车成功'})
+
         if user.is_authenticated:
             # 如果是登录用户存储购物车数据到redis
-            pass
+            # 创建redis连接对象
+            redis_conn = get_redis_connection('carts')
+            # 创建管道
+            pl = redis_conn.pipeline()
+            """
+            hash: {sku_id_1: count, sku_id2: count}
+            set: {sku_id_1, sku_id_2}
+            
+            """
+            # hincrby()
+            pl.hincrby('carts_%s' % user.id, sku_id, count)
+
+            # sadd()
+            if selected:  # 只有勾选的才向set集合中添加
+                pl.sadd('selected_%s' % user.id, sku_id)
+
+            # 执行管道
+            pl.execute()
+            # 响应
+            # return http.JsonResponse({'code': RETCODE.OK, 'errmsg': '添加购物车成功'})
+
         else:
             # 如果未登录存储购物车数据到cookie
 
@@ -72,8 +94,6 @@ class CartsView(View):
             # 把购物车字典转换回字符串 然后重新设置到cookie中
             cart_str = base64.b64encode(pickle.dumps(cart_dict)).decode()
 
-
             # 响应
-            response = http.JsonResponse({'code': RETCODE.OK, 'errmsg': '添加购物车成功'})
             response.set_cookie('carts', cart_str)
-            return response
+        return response
