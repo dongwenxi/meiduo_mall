@@ -269,9 +269,21 @@ class CartsView(View):
 
         # 判断是否登录
         user = request.user
+        response = http.JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK'})
+
         if user.is_authenticated:
             # 登录操作redis数据
-            pass
+            # 创建redis连接对象
+            redis_conn = get_redis_connection('carts')
+            # 创建管道
+            pl = redis_conn.pipeline()
+
+            # 删除hash中的sku_id及count
+            pl.hdel('carts_%s' % user.id, sku_id)
+            # 删除set集合中的勾选
+            pl.srem('selected_%s' % user.id, sku_id)
+            pl.execute()
+
         else:
             # 未登录操作cookie数据
             # 获取cookie数据
@@ -289,7 +301,6 @@ class CartsView(View):
                 # del cart_dict[sku_id]
                 del cart_dict[sku_id]
 
-            response = http.JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK'})
             if len(cart_dict.keys()) == 0:  # 如果cookie中的购物车数据已经删除完了
                 response.delete_cookie('carts')  # 删除cookie
 
@@ -298,6 +309,6 @@ class CartsView(View):
             cart_str = base64.b64encode(pickle.dumps(cart_dict)).decode()
             # 设置cookie
             response.set_cookie('carts', cart_str)
-            # 响应
-            return response
+        # 响应
+        return response
 
