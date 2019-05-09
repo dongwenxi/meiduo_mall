@@ -156,7 +156,7 @@ class CartsView(View):
                 'default_image_url': sku.default_image.url,
                 'count': str(cart_dict[sku.id]['count']),  # 方便js中的json对数据渲染
                 'selected': str(cart_dict[sku.id]['selected']),
-                'amount': str(sku.price * cart_dict[sku.id]['count'])
+                'amount': str(sku.price * int(cart_dict[sku.id]['count']))
             }
             cart_skus.append(sku_dict)
 
@@ -165,3 +165,65 @@ class CartsView(View):
         }
 
         return render(request, 'cart.html', context)
+
+    def put(self, request):
+        """修改购物车数据"""
+        # 接收前端传入 sku_id, count, selected
+        json_dict = json.loads(request.body.decode())
+        sku_id = json_dict.get('sku_id')
+        count = json_dict.get('count')
+        selected = json_dict.get('selected')
+        # 校验
+        if all([sku_id, count]) is False:
+            return http.HttpResponseForbidden('缺少必传参数')
+
+        try:
+            sku = SKU.objects.get(id=sku_id)
+        except SKU.DoesNotExist:
+            return http.HttpResponseForbidden('sku不存在')
+
+        user = request.user
+        if user.is_authenticated:
+
+            # 登录用户修改redis购物车数据
+            pass
+        else:
+            # 未登录用户修改cookie购物车数据
+
+            # 查询cookie购物车数据
+            cart_str = request.COOKIES.get('carts')
+            # 判断cookie有没有值
+            if cart_str:
+                # 把字符串转换成字典
+                cart_dict = pickle.loads(base64.b64decode(cart_str.encode()))
+            else:
+                # 如果cookie购物车没有数据
+                return http.JsonResponse({'code': RETCODE.DBERR, 'errmsg': 'cookie数据没有获取'})
+
+
+            # 修改购物车大字典数据,新值覆盖旧值
+            cart_dict[sku_id] = {
+                'count': count,
+                'selected': selected
+            }
+            # 将字典转换成字符串
+            cart_str = base64.b64encode(pickle.dumps(cart_dict)).decode()
+
+            cart_sku = {
+                'id': sku.id,
+                'name': sku.name,
+                'price': sku.price,
+                'default_image_url': sku.default_image.url,
+                'count': count,
+                'selected': selected,
+                'amount': sku.price * int(count)  # 注意count类型问题
+            }
+
+            # 设置cookie
+            response = http.JsonResponse({'code': RETCODE.OK, 'errmsg': '修改购物车数据成功', 'cart_sku': cart_sku})
+            response.set_cookie('carts', cart_str)
+            # 响应
+            return response
+
+
+        pass
