@@ -151,10 +151,7 @@ class LoginView(View):
             request.session.set_expiry(0)
 
         response = redirect(request.GET.get('next', '/'))  # 创建好响应对象
-        if remembered != 'on':
-            response.set_cookie('username', user.username, max_age=settings.SESSION_COOKIE_AGE)
-        else:
-            response.set_cookie('username', user.username)
+        response.set_cookie('username', user.username, max_age=settings.SESSION_COOKIE_AGE if remembered == 'on' else None)
 
 
         # 登录成功那一刻合并购物车
