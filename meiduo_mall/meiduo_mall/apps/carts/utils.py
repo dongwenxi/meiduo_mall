@@ -1,0 +1,1 @@
+def merge_cart_cookie_to_redis():    """登录时合并购物车"""    pass
