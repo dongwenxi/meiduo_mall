@@ -12,6 +12,7 @@ class OrderSettlementView(LoginRequiredView):
 
     def get(self, request):
         user = request.user
+        # 获取当前登录用户的所有收货地址
         addresses = Address.objects.filter(user=user, is_deleted=False)
         # 如果有收货地址什么也不做,没有收货地址把变量设置为None
         addresses = addresses if addresses.exists() else None
