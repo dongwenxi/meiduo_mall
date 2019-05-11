@@ -318,5 +318,32 @@ class CartsSelectView(View):
     """购物车全选"""
 
     def put(self, request):
-        pass
+
+        json_dict = json.loads(request.body.decode())
+        selected = json_dict.get('selected')
+
+        if isinstance(selected, bool) is False:
+            return http.HttpResponseForbidden('参数有误')
+
+        user = request.user
+        response = http.JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK'})
+        if user.is_authenticated:
+            """登录用户操作redis数据"""
+            # 创建redis连接对象
+            redis_conn = get_redis_connection('carts')
+            # 获取到hash购物车数据{sku_id: count}
+            redis_cart = redis_conn.hgetall('carts_%s' % user.id)
+            # 判断当前是全选还是全不选
+            if selected:
+                # 如果是全选把hash中的所有sku_id添加到set集合中
+                redis_conn.sadd('selected_%s' % user.id, *redis_cart.keys())
+            else:
+                # 如果取消全选,把hash中的所有sku_id 从set集合中删除
+                # redis_conn.srem('selected_%s' % user.id, *redis_cart.keys())
+                redis_conn.delete('selected_%s' % user.id)  # 将指定key对应的数据直接删除
+
+        else:
+            """未登录用户操作cookie数据"""
+
+        return response
 
