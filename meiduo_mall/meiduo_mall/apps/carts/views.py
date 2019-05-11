@@ -46,11 +46,12 @@ class CartsView(View):
             """
             # hincrby()
             pl.hincrby('carts_%s' % user.id, sku_id, count)
+            # pl.expire('carts_%s' % user.id, 30)
 
             # sadd()
             if selected:  # 只有勾选的才向set集合中添加
                 pl.sadd('selected_%s' % user.id, sku_id)
-
+            # pl.expire('selected_%s' % user.id, 30)
             # 执行管道
             pl.execute()
             # 响应
