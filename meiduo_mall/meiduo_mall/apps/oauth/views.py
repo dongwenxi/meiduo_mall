@@ -13,6 +13,7 @@ from .models import OAuthQQUser
 from .utils import generate_openid_signature, check_openid_sign
 from users.models import User
 from .models import OAuthQQUser
+from carts.utils import merge_cart_cookie_to_redis
 
 
 logger = logging.getLogger('django')
@@ -82,7 +83,10 @@ class OAuthUserView(View):
             login(request, user)
             # 直接登录成功:  状态操持,
             response = redirect(state)
-            response.set_cookie('username', user.username, max_age=settings.SESSSION_COOKIE_AGE)
+            response.set_cookie('username', user.username, max_age=settings.SESSION_COOKIE_AGE)
+
+            # 登录成功那一刻合并购物车
+            merge_cart_cookie_to_redis(request, user, response)
             return response
 
 
@@ -145,4 +149,6 @@ class OAuthUserView(View):
         login(request, user)
         response = redirect(request.GET.get('state'))
         response.set_cookie('username', user.username, max_age=settings.SESSION_COOKIE_AGE)
+        # 登录成功那一刻合并购物车
+        merge_cart_cookie_to_redis(request, user, response)
         return response
