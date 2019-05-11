@@ -56,3 +56,22 @@ class OrderSettlementView(LoginRequiredView):
             'payment_amount': total_amount + freight  # 实付款
         }
         return render(request, 'place_order.html', context)
+
+
+class OrderCommitView(LoginRequiredView):
+    """提交订单"""
+
+    def post(self, request):
+
+        # 接收前端传入的收货地址,及支付方式
+        # 校验
+
+        # 创建一个订单基本信息模型 并存储
+        # 判断库存
+        # 修改sku的库存
+        # 修改sku的销量
+        # 修改spu的销量
+
+        # 存储订单商品记录
+
+        pass
