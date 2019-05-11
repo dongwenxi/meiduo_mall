@@ -303,12 +303,20 @@ class CartsView(View):
 
             if len(cart_dict.keys()) == 0:  # 如果cookie中的购物车数据已经删除完了
                 response.delete_cookie('carts')  # 删除cookie
+                return response
 
 
-            # 将字典转换成字符串
+            # 将字典转换成字符串 {}  # fsdf=
             cart_str = base64.b64encode(pickle.dumps(cart_dict)).decode()
             # 设置cookie
             response.set_cookie('carts', cart_str)
         # 响应
         return response
+
+
+class CartsSelectView(View):
+    """购物车全选"""
+
+    def put(self, request):
+        pass
 
