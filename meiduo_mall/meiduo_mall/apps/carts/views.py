@@ -344,6 +344,27 @@ class CartsSelectView(View):
 
         else:
             """未登录用户操作cookie数据"""
+            # 获取cookie购物车数据
+            cart_str = request.COOKIES.get('carts')
+            # 判断有没有获取到cookie购物车数据
+            if cart_str:
+                # 如果获取到把字符串转换成字典
+                cart_dict = pickle.loads(base64.b64decode(cart_str.encode()))
+            else:
+                # 如果没有获取到直接响应
+                return http.JsonResponse({'code': RETCODE.DBERR, 'errmsg': 'cookie数据没有获取到'})
+            """
+            {
+                sku_id: {'count': 1, 'selected': True}
+            }
+            """
+            # 遍历cookie购物车大字典,把里面的selected改为True或False
+            for sku_id in cart_dict:
+                cart_dict[sku_id]['selected'] = selected
+            # 把字典转换成字符串
+            cart_str = base64.b64encode(pickle.dumps(cart_dict)).decode()
+            # 设置cookie
+            response.set_cookie('carts', cart_str)
 
         return response
 
