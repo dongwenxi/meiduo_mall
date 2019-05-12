@@ -16,7 +16,7 @@ from .utils import generate_verify_email_url, check_token_to_user
 from meiduo_mall.utils.views import LoginRequiredView
 from goods.models import SKU
 from carts.utils import merge_cart_cookie_to_redis
-
+from orders.models import OrderInfo, OrderGoods
 
 logger = logging.getLogger('django')  # 创建日志输出器对象
 
@@ -594,8 +594,27 @@ class UserOrderInfoView(LoginRequiredView):
 
     def get(self, request, page_num):
 
-        context = {
+        user = request.user
+        # 查询当前登录用户的所有订单
+        order_qs = OrderInfo.objects.filter(user=user)
+        for order_model in order_qs:
 
+            # 给每个订单多定义两个属性, 订单支付方式中文名字, 订单状态中文名字
+            order_model.pay_method_name = OrderInfo.PAY_METHOD_CHOICES[order_model.pay_method - 1][1]
+            order_model.status_name = OrderInfo.ORDER_STATUS_CHOICES[order_model.status - 1][1]
+            # 再给订单模型对象定义sku_list属性,用它来包装订单中的所有商品
+            order_model.sku_list = []  #
+
+
+
+
+        # order.sku_list
+
+        # 创建分页器对订单数据进行分页
+        context = {
+            'page_orders': '',  # 当前这一页要显示的所有订单数据
+            'page_num': page_num,  # 当前是第几页
+            'total_page': ''  # 总页数
         }
         return render(request, 'user_center_order.html', context)
 
