@@ -123,42 +123,51 @@ class OrderCommitView(LoginRequiredView):
 
                 # 遍历用来包装所有要购买商品的字典
                 for sku_id in cart_dict:
-                    # 通过sku_id获取到sku模型
-                    sku = SKU.objects.get(id=sku_id)
-                    # 获取当前商品要购买的数量
-                    buy_count = cart_dict[sku_id]
-                    # 获取当前商品的库存和销量
-                    origin_stock = sku.stock
-                    origin_sales = sku.sales
+                    while True:
+                        # 通过sku_id获取到sku模型
+                        sku = SKU.objects.get(id=sku_id)
+                        # 获取当前商品要购买的数量
+                        buy_count = cart_dict[sku_id]
+                        # 获取当前商品的库存和销量
+                        origin_stock = sku.stock
+                        origin_sales = sku.sales
 
-                    # 判断库存
-                    if buy_count > origin_stock:
-                        # 回滚
-                        transaction.savepoint_rollback(save_point)
-                        return http.JsonResponse({'code': RETCODE.STOCKERR, 'errmsg': '库存不足'})
+                        import time
+                        time.sleep(5)
 
-                    new_stock = origin_stock - buy_count  # 计算新的库存
-                    new_sales = origin_sales + buy_count  # 计算新的销量
-                    # 修改sku的库存
-                    sku.stock = new_stock
-                    # 修改sku的销量
-                    sku.sales = new_sales
-                    sku.save()
+                        # 判断库存
+                        if buy_count > origin_stock:
+                            # 回滚
+                            transaction.savepoint_rollback(save_point)
+                            return http.JsonResponse({'code': RETCODE.STOCKERR, 'errmsg': '库存不足'})
 
-                    # 修改spu的销量
-                    sku.spu.sales += buy_count
-                    sku.spu.save()
+                        new_stock = origin_stock - buy_count  # 计算新的库存
+                        new_sales = origin_sales + buy_count  # 计算新的销量
+                        # 修改sku的库存
+                        # sku.stock = new_stock
+                        # # 修改sku的销量
+                        # sku.sales = new_sales
+                        # sku.save()
+                        result = SKU.objects.filter(id=sku_id, stock=origin_stock).update(stock=new_stock, sales=new_sales)
+                        if result == 0:  # 如果下单失败,给它无限次下单机会,只到成功,或库存不足
+                            continue
 
-                    # 存储订单商品记录
-                    OrderGoods.objects.create(
-                        order=order,
-                        sku=sku,
-                        count=buy_count,
-                        price=sku.price
-                    )
+                        # 修改spu的销量
+                        sku.spu.sales += buy_count
+                        sku.spu.save()
 
-                    order.total_count += buy_count  # 累加订单商品总数量
-                    order.total_amount += (sku.price * buy_count)  # 累加商品总价
+                        # 存储订单商品记录
+                        OrderGoods.objects.create(
+                            order=order,
+                            sku=sku,
+                            count=buy_count,
+                            price=sku.price
+                        )
+
+                        order.total_count += buy_count  # 累加订单商品总数量
+                        order.total_amount += (sku.price * buy_count)  # 累加商品总价
+
+                        break  # 如果当前这个商品下单成功跳出死循环
 
                 order.total_amount += order.freight  # 累加运费
                 order.save()
