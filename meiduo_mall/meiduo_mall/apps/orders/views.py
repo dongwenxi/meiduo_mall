@@ -132,8 +132,8 @@ class OrderCommitView(LoginRequiredView):
                         origin_stock = sku.stock
                         origin_sales = sku.sales
 
-                        import time
-                        time.sleep(5)
+                        # import time
+                        # time.sleep(5)
 
                         # 判断库存
                         if buy_count > origin_stock:
@@ -148,6 +148,7 @@ class OrderCommitView(LoginRequiredView):
                         # # 修改sku的销量
                         # sku.sales = new_sales
                         # sku.save()
+                        # 使用乐观锁解决抢夺时数据库写入脏数据
                         result = SKU.objects.filter(id=sku_id, stock=origin_stock).update(stock=new_stock, sales=new_sales)
                         if result == 0:  # 如果下单失败,给它无限次下单机会,只到成功,或库存不足
                             continue
@@ -176,6 +177,13 @@ class OrderCommitView(LoginRequiredView):
                 return http.JsonResponse({'code': RETCODE.DBERR, 'errmsg': '下单失败'})
             else:
                 transaction.savepoint_commit(save_point)  # 提交事务
+
+        pl = redis_conn.pipeline()
+        pl.hdel('carts_%s' % user.id, *cart_selected)  # 删除hash中已经购买商品数据{2: 1}
+        pl.delete('selected_%s' % user.id)
+        pl.execute()
+
+
 
 
         return http.JsonResponse({'code': RETCODE.OK, 'errmsg': '提交订单成功', 'order_id': order_id})
