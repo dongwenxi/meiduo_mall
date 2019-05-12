@@ -306,7 +306,6 @@ class CartsView(View):
                 response.delete_cookie('carts')  # 删除cookie
                 return response
 
-
             # 将字典转换成字符串 {}  # fsdf=
             cart_str = base64.b64encode(pickle.dumps(cart_dict)).decode()
             # 设置cookie
@@ -370,8 +369,6 @@ class CartsSelectView(View):
         return response
 
 
-
-
 class CartsSimpleView(View):
     """展示简单的购物车数据"""
 
@@ -433,6 +430,5 @@ class CartsSimpleView(View):
                 'count': int(cart_dict[sku.id]['count']),  # 方便js中的json对数据渲染
             }
             cart_skus.append(sku_dict)
-
 
         return http.JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK', 'cart_skus': cart_skus})

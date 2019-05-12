@@ -4,6 +4,7 @@ from decimal import Decimal
 import json
 from django import http
 from django.utils import timezone
+from django.db import transaction
 
 from meiduo_mall.utils.views import LoginRequiredView
 from users.models import Address
@@ -92,67 +93,80 @@ class OrderCommitView(LoginRequiredView):
                   if pay_method == OrderInfo.PAY_METHODS_ENUM.get('ALIPAY')
                   else OrderInfo.ORDER_STATUS_ENUM.get('UNSEND'))
 
-        # 创建一个订单基本信息模型 并存储
-        order = OrderInfo.objects.create(
-            order_id=order_id,
-            user=user,
-            address=address,
-            total_count=0,
-            total_amount=Decimal('0.00'),
-            freight=Decimal('10.00'),
-            pay_method=pay_method,
-            status=status
-        )
+        with transaction.atomic():  # 手动创建事务
 
-        # 创建redis连接
-        redis_conn = get_redis_connection('carts')
-        # 获取hash数据
-        redis_cart = redis_conn.hgetall('carts_%s' % user.id)
-        # 获取set集合数据
-        cart_selected = redis_conn.smembers('selected_%s' % user.id)
-        cart_dict = {}
-        # 遍历set把要购买的sku_id和count包装到一个新字典中
-        for sku_id_bytes in cart_selected:
-            cart_dict[int(sku_id_bytes)] = int(redis_cart[sku_id_bytes])
+            # 创建事务保存点
+            save_point = transaction.savepoint()
+            try:
+                # 创建一个订单基本信息模型 并存储
+                order = OrderInfo.objects.create(
+                    order_id=order_id,
+                    user=user,
+                    address=address,
+                    total_count=0,
+                    total_amount=Decimal('0.00'),
+                    freight=Decimal('10.00'),
+                    pay_method=pay_method,
+                    status=status
+                )
 
-        # 遍历用来包装所有要购买商品的字典
-        for sku_id in cart_dict:
-            # 通过sku_id获取到sku模型
-            sku = SKU.objects.get(id=sku_id)
-            # 获取当前商品要购买的数量
-            buy_count = cart_dict[sku_id]
-            # 获取当前商品的库存和销量
-            origin_stock = sku.stock
-            origin_sales = sku.sales
+                # 创建redis连接
+                redis_conn = get_redis_connection('carts')
+                # 获取hash数据
+                redis_cart = redis_conn.hgetall('carts_%s' % user.id)
+                # 获取set集合数据
+                cart_selected = redis_conn.smembers('selected_%s' % user.id)
+                cart_dict = {}
+                # 遍历set把要购买的sku_id和count包装到一个新字典中
+                for sku_id_bytes in cart_selected:
+                    cart_dict[int(sku_id_bytes)] = int(redis_cart[sku_id_bytes])
 
-            # 判断库存
-            if buy_count > origin_stock:
-                return http.JsonResponse({'code': RETCODE.STOCKERR, 'errmsg': '库存不足'})
+                # 遍历用来包装所有要购买商品的字典
+                for sku_id in cart_dict:
+                    # 通过sku_id获取到sku模型
+                    sku = SKU.objects.get(id=sku_id)
+                    # 获取当前商品要购买的数量
+                    buy_count = cart_dict[sku_id]
+                    # 获取当前商品的库存和销量
+                    origin_stock = sku.stock
+                    origin_sales = sku.sales
 
-            new_stock = origin_stock - buy_count  # 计算新的库存
-            new_sales = origin_sales + buy_count  # 计算新的销量
-            # 修改sku的库存
-            sku.stock = new_stock
-            # 修改sku的销量
-            sku.sales = new_sales
-            sku.save()
+                    # 判断库存
+                    if buy_count > origin_stock:
+                        # 回滚
+                        transaction.savepoint_rollback(save_point)
+                        return http.JsonResponse({'code': RETCODE.STOCKERR, 'errmsg': '库存不足'})
 
-            # 修改spu的销量
-            sku.spu.sales += buy_count
-            sku.spu.save()
+                    new_stock = origin_stock - buy_count  # 计算新的库存
+                    new_sales = origin_sales + buy_count  # 计算新的销量
+                    # 修改sku的库存
+                    sku.stock = new_stock
+                    # 修改sku的销量
+                    sku.sales = new_sales
+                    sku.save()
 
-            # 存储订单商品记录
-            OrderGoods.objects.create(
-                order=order,
-                sku=sku,
-                count=buy_count,
-                price=sku.price
-            )
+                    # 修改spu的销量
+                    sku.spu.sales += buy_count
+                    sku.spu.save()
 
-            order.total_count += buy_count  # 累加订单商品总数量
-            order.total_amount += (sku.price * buy_count)  # 累加商品总价
+                    # 存储订单商品记录
+                    OrderGoods.objects.create(
+                        order=order,
+                        sku=sku,
+                        count=buy_count,
+                        price=sku.price
+                    )
 
-        order.total_amount += order.freight  # 累加运费
-        order.save()
+                    order.total_count += buy_count  # 累加订单商品总数量
+                    order.total_amount += (sku.price * buy_count)  # 累加商品总价
+
+                order.total_amount += order.freight  # 累加运费
+                order.save()
+            except Exception:
+                transaction.savepoint_rollback(save_point)  # 回滚
+                return http.JsonResponse({'code': RETCODE.DBERR, 'errmsg': '下单失败'})
+            else:
+                transaction.savepoint_commit(save_point)  # 提交事务
+
 
         return http.JsonResponse({'code': RETCODE.OK, 'errmsg': '提交订单成功', 'order_id': order_id})
