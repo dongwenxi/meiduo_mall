@@ -7,6 +7,7 @@ from django.db import DatabaseError
 from django_redis import get_redis_connection
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
 
 from .models import User, Address
 import logging
@@ -17,6 +18,7 @@ from meiduo_mall.utils.views import LoginRequiredView
 from goods.models import SKU
 from carts.utils import merge_cart_cookie_to_redis
 from orders.models import OrderInfo, OrderGoods
+
 
 logger = logging.getLogger('django')  # 创建日志输出器对象
 
@@ -596,25 +598,37 @@ class UserOrderInfoView(LoginRequiredView):
 
         user = request.user
         # 查询当前登录用户的所有订单
-        order_qs = OrderInfo.objects.filter(user=user)
+        order_qs = OrderInfo.objects.filter(user=user).order_by('-create_time')
         for order_model in order_qs:
 
             # 给每个订单多定义两个属性, 订单支付方式中文名字, 订单状态中文名字
             order_model.pay_method_name = OrderInfo.PAY_METHOD_CHOICES[order_model.pay_method - 1][1]
             order_model.status_name = OrderInfo.ORDER_STATUS_CHOICES[order_model.status - 1][1]
             # 再给订单模型对象定义sku_list属性,用它来包装订单中的所有商品
-            order_model.sku_list = []  #
+            order_model.sku_list = []
 
-
-
-
-        # order.sku_list
+            # 获取订单中的所有商品
+            order_good_qs = order_model.skus.all()
+            # 遍历订单中所有商品查询集
+            for good_model in order_good_qs:
+                sku = good_model.sku  # 获取到订单商品所对应的sku
+                sku.count = good_model.count  # 绑定它买了几件
+                sku.amount = sku.price * sku.count  # 给sku绑定一个小计总额
+                # 把sku添加到订单sku_list列表中
+                order_model.sku_list.append(sku)
 
         # 创建分页器对订单数据进行分页
+        # 创建分页对象
+        paginator = Paginator(order_qs, 2)
+        # 获取指定页的所有数据
+        page_orders = paginator.page(page_num)
+        # 获取总页数
+        total_page = paginator.num_pages
+
         context = {
-            'page_orders': '',  # 当前这一页要显示的所有订单数据
+            'page_orders': page_orders,  # 当前这一页要显示的所有订单数据
             'page_num': page_num,  # 当前是第几页
-            'total_page': ''  # 总页数
+            'total_page': total_page  # 总页数
         }
         return render(request, 'user_center_order.html', context)
 
