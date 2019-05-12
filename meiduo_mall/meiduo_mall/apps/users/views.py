@@ -155,7 +155,7 @@ class LoginView(View):
 
 
         # 登录成功那一刻合并购物车
-        merge_cart_cookie_to_redis(request, user, response)
+        merge_cart_cookie_to_redis(request, response)
         # 响应结果重定向到首页
         return response
 

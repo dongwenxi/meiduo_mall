@@ -86,7 +86,7 @@ class OAuthUserView(View):
             response.set_cookie('username', user.username, max_age=settings.SESSION_COOKIE_AGE)
 
             # 登录成功那一刻合并购物车
-            merge_cart_cookie_to_redis(request, user, response)
+            merge_cart_cookie_to_redis(request, response)
             return response
 
 
@@ -150,5 +150,5 @@ class OAuthUserView(View):
         response = redirect(request.GET.get('state'))
         response.set_cookie('username', user.username, max_age=settings.SESSION_COOKIE_AGE)
         # 登录成功那一刻合并购物车
-        merge_cart_cookie_to_redis(request, user, response)
+        merge_cart_cookie_to_redis(request, response)
         return response
