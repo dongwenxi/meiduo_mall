@@ -187,3 +187,33 @@ class OrderCommitView(LoginRequiredView):
 
 
         return http.JsonResponse({'code': RETCODE.OK, 'errmsg': '提交订单成功', 'order_id': order_id})
+
+
+class OrderSuccessView(LoginRequiredView):
+    """展示提交订单成功界面"""
+
+    def get(self, request):
+
+        # 接收查询参数
+        query_dict = request.GET
+        order_id = query_dict.get('order_id')
+        payment_amount = query_dict.get('payment_amount')
+        pay_method = query_dict.get('pay_method')
+
+        # 校验
+        try:
+            OrderInfo.objects.get(order_id=order_id, pay_method=pay_method, total_amount=payment_amount)
+        except OrderInfo.DoesNotExist:
+            return http.HttpResponseForbidden('订单有误')
+
+
+
+        # 包装要传给模板的数据
+        context = {
+            'order_id': order_id,
+            'payment_amount': payment_amount,
+            'pay_method': pay_method
+        }
+
+        return render(request, 'order_success.html', context)
+
