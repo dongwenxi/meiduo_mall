@@ -589,3 +589,14 @@ class UserBrowseHistory(View):
         # 响应
         return http.JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK', 'skus': skus})
 
+
+class UserOrderInfoView(LoginRequiredView):
+
+    def get(self, request, page_num):
+
+        context = {
+
+        }
+        return render(request, 'user_center_order.html', context)
+
+
