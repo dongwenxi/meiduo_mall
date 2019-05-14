@@ -86,7 +86,9 @@ class OrderCommitView(LoginRequiredView):
         # 20190511121110 + %09d % user.id
         user = request.user
         # 生成订单编号
-        order_id = timezone.localtime().strftime('%Y%m%d%H%M%S') + ('%09d' % user.id)
+        # order_id = timezone.localtime().strftime('%Y%m%d%H%M%S') + ('%09d' % user.id)
+        order_id = timezone.now().strftime('%Y%m%d%H%M%S') + ('%09d' % user.id)
+
 
         # 订单状态
         status = (OrderInfo.ORDER_STATUS_ENUM.get('UNPAID')

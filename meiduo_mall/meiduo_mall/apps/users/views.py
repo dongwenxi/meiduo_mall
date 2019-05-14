@@ -85,7 +85,7 @@ class RegisterView(View):
         login(request, user)  # 存储用户的id到session中记录它的登录状态
         response = redirect('/')  # 创建好响应对象
         response.set_cookie('username', user.username, max_age=settings.SESSION_COOKIE_AGE)
-
+        merge_cart_cookie_to_redis(request, response)
         # 响应结果重定向到首页
         return response
 

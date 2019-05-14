@@ -159,7 +159,8 @@ class DetailVisitView(View):
             return http.HttpResponseForbidden('商品类别不存在')
 
         # 获取当前日期
-        today_date = timezone.localdate()
+        # today_date = timezone.localdate()
+        today_date = timezone.now()
         try:
 
             # 查询当前类别今天没有没统计过  # 注意不要写成data了
