@@ -89,7 +89,6 @@ class OrderCommitView(LoginRequiredView):
         # order_id = timezone.localtime().strftime('%Y%m%d%H%M%S') + ('%09d' % user.id)
         order_id = timezone.now().strftime('%Y%m%d%H%M%S') + ('%09d' % user.id)
 
-
         # 订单状态
         status = (OrderInfo.ORDER_STATUS_ENUM.get('UNPAID')
                   if pay_method == OrderInfo.PAY_METHODS_ENUM.get('ALIPAY')
@@ -151,7 +150,8 @@ class OrderCommitView(LoginRequiredView):
                         # sku.sales = new_sales
                         # sku.save()
                         # 使用乐观锁解决抢夺时数据库写入脏数据
-                        result = SKU.objects.filter(id=sku_id, stock=origin_stock).update(stock=new_stock, sales=new_sales)
+                        result = SKU.objects.filter(id=sku_id, stock=origin_stock).update(stock=new_stock,
+                                                                                          sales=new_sales)
                         if result == 0:  # 如果下单失败,给它无限次下单机会,只到成功,或库存不足
                             continue
 
@@ -185,9 +185,6 @@ class OrderCommitView(LoginRequiredView):
         pl.delete('selected_%s' % user.id)
         pl.execute()
 
-
-
-
         return http.JsonResponse({'code': RETCODE.OK, 'errmsg': '提交订单成功', 'order_id': order_id})
 
 
@@ -208,8 +205,6 @@ class OrderSuccessView(LoginRequiredView):
         except OrderInfo.DoesNotExist:
             return http.HttpResponseForbidden('订单有误')
 
-
-
         # 包装要传给模板的数据
         context = {
             'order_id': order_id,
@@ -219,3 +214,39 @@ class OrderSuccessView(LoginRequiredView):
 
         return render(request, 'order_success.html', context)
 
+
+class OrderCommentView(LoginRequiredView):
+    """订单评价"""
+
+    def get(self, request):
+        """展示订单评价界面"""
+        # 接收查询参数
+        order_id = request.GET.get('order_id')
+        # 校验
+        try:
+            order = OrderInfo.objects.get(order_id=order_id, user=request.user,
+                                          status=OrderInfo.ORDER_STATUS_ENUM['UNCOMMENT'])
+        except OrderInfo.DoesNotExist:
+            return http.HttpResponseForbidden('订单有误')
+
+        # 查询当前订单中所有未评价的商品
+        # order_goods_qs = order.skus.filter(is_commented=False)
+        order_goods_qs = OrderGoods.objects.filter(order=order, is_commented=False)
+        # 构造前端渲染需要的数据
+        uncomment_goods_list = []
+        for order_goods in order_goods_qs:
+            sku = order_goods.sku
+            uncomment_goods_list.append({
+                'default_image_url': sku.default_image.url,
+                'name': sku.name,
+                'price': str(sku.price),
+                'score': str(order_goods.score),
+                'comment': order_goods.comment,
+                'is_anonymous': str(order_goods.is_anonymous),
+                'is_comment': str(order_goods.is_commented)
+            })
+
+        context = {
+            'uncomment_goods_list': uncomment_goods_list
+        }
+        return render(request, 'goods_judge.html', context)
