@@ -37,4 +37,6 @@ urlpatterns = [
 
     url(r'^', include('orders.urls', namespace='orders')),  # 订单模块
 
+    url(r'^', include('payment.urls', namespace='payment')),  # 支付模块
+
 ]
