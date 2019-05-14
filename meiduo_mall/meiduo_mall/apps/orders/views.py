@@ -5,6 +5,7 @@ import json
 from django import http
 from django.utils import timezone
 from django.db import transaction
+from django.views import View
 
 from meiduo_mall.utils.views import LoginRequiredView
 from users.models import Address
@@ -300,3 +301,32 @@ class OrderCommentView(LoginRequiredView):
 
         # 响应
         return http.JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK'})
+
+
+
+class GoodsCommentView(View):
+    """获取评价信息"""
+
+    def get(self, request, sku_id):
+        # 校验
+        try:
+            sku = SKU.objects.get(id=sku_id)
+        except SKU.DoesNotExist:
+            return http.HttpResponseForbidden('sku不存在')
+
+        # 获取OrderGoods中的当前sku_id的所有OrderGoods
+        order_goods_qs = OrderGoods.objects.filter(sku_id=sku_id, is_commented=True).order_by('-create_time')
+
+        comments = []
+        # 构造前端需要的数据格式  username, score , comment
+        for order_goods in order_goods_qs:
+            username = order_goods.order.user.username  # 获取当前订单商品所属用户名
+
+            comments.append({
+                'username': (username[0] + '***' + username[-1]) if order_goods.is_anonymous else username,
+                'score': order_goods.score,
+                'comment': order_goods.comment
+            })
+
+        # 响应
+        return http.JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK', 'comment_list': comments})
