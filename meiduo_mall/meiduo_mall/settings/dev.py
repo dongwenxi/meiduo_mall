@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     'contents',  # 首页
     'goods',  # 商品
     'orders',  # 订单
+    'payment',  # 支付
 ]
 
 MIDDLEWARE = [

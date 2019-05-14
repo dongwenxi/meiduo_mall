@@ -7,6 +7,7 @@ import os
 from meiduo_mall.utils.views import LoginRequiredView
 from orders.models import OrderInfo
 from meiduo_mall.utils.response_code import RETCODE
+from .models import Payment
 
 
 class PaymentView(LoginRequiredView):
@@ -21,10 +22,10 @@ class PaymentView(LoginRequiredView):
             return http.HttpResponseForbidden('订单有误')
 
         # 支付宝
-        ALIPAY_APPID = '2016091900551154'
-        ALIPAY_DEBUG = True  # 表示是沙箱环境还是真实支付环境
-        ALIPAY_URL = 'https://openapi.alipaydev.com/gateway.do'
-        ALIPAY_RETURN_URL = 'http://www.meiduo.site:8000/payment/status/'
+        # ALIPAY_APPID = '2016091900551154'
+        # ALIPAY_DEBUG = True  # 表示是沙箱环境还是真实支付环境
+        # ALIPAY_URL = 'https://openapi.alipaydev.com/gateway.do'
+        # ALIPAY_RETURN_URL = 'http://www.meiduo.site:8000/payment/status/'
         # 创建AliPay 对象
         alipay = AliPay(
             appid=settings.ALIPAY_APPID,
@@ -54,4 +55,51 @@ class PaymentView(LoginRequiredView):
 
 
 
-# 第二个视图 就是校验支付结果,及修改订单状态
+
+
+class PaymentStatusView(LoginRequiredView):
+    """第二个视图 就是校验支付结果,及修改订单状态"""
+    def get(self, request):
+        # 获取查询参数
+        query_dict = request.GET
+        # 将QueryDict类型转换成字典
+        data = query_dict.dict()
+        # 将字典中的sign移除
+        sign = data.pop('sign')
+
+        # 创建alipay对象
+        alipay = AliPay(
+            appid=settings.ALIPAY_APPID,
+            app_notify_url=None,  # 默认回调url
+            app_private_key_path=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'keys/app_private_key.pem'),
+            alipay_public_key_path=os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                                'keys/alipay_public_key.pem'),
+            # 支付宝的公钥，验证支付宝回传消息使用，不是你自己的公钥,
+            sign_type="RSA2",  # RSA 或者 RSA2
+            debug=settings.ALIPAY_DEBUG  # 默认False
+        )
+
+
+        # 调用它的verify方法校验支付结果
+        success = alipay.verify(data, sign)
+        if success:
+            # 保存支付宝交易号和美多订单号
+            order_id = data.get('out_trade_no')
+            trade_id = data.get('trade_no')
+            try:
+                Payment.objects.get(order_id=order_id, trade_id=trade_id)
+            except Payment.DoesNotExist:
+                # 保存支付结果
+                Payment.objects.create(
+                    order_id=order_id,
+                    trade_id=trade_id
+                )
+
+                # 修改美多订单状态
+                OrderInfo.objects.filter(user=request.user, order_id=order_id, status=OrderInfo.ORDER_STATUS_ENUM['UNPAID']).update(
+                    status=OrderInfo.ORDER_STATUS_ENUM['UNCOMMENT']
+                )
+            # 响应
+            return render(request, 'pay_success.html', {'trade_id': trade_id})
+        else:
+            return http.HttpResponseForbidden('非法请求')
