@@ -282,7 +282,7 @@ class OrderCommentView(LoginRequiredView):
 
 
         # 修改OrderGoods中的评价信息
-        OrderGoods.objects.filter(sku_id=sku_id, is_commented=False).update(
+        OrderGoods.objects.filter(sku_id=sku_id, order_id=order_id, is_commented=False).update(
             is_anonymous=is_anonymous,
             score=score,
             comment=comment,

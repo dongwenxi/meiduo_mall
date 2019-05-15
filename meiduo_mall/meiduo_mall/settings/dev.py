@@ -98,12 +98,20 @@ WSGI_APPLICATION = 'meiduo_mall.wsgi.application'
 
 # 数据库配置
 DATABASES = {
-    'default': {
+    'default': {  # 主机
         'ENGINE': 'django.db.backends.mysql',  # 数据库引擎
         'HOST': '192.168.103.210',  # 数据库主机
         'PORT': 3306,  # 数据库端口
         'USER': 'meiduo_25',  # 数据库用户名
         'PASSWORD': 'meiduo_25',  # 数据库用户密码
+        'NAME': 'meiduo_25'  # 数据库名字
+    },
+    'slave': {  # 从机
+        'ENGINE': 'django.db.backends.mysql',  # 数据库引擎
+        'HOST': '192.168.103.210',  # 数据库主机
+        'PORT': 8306,  # 数据库端口
+        'USER': 'root',  # 数据库用户名
+        'PASSWORD': 'mysql',  # 数据库用户密码
         'NAME': 'meiduo_25'  # 数据库名字
     },
 }
@@ -294,3 +302,6 @@ CRONJOBS = [
 ]
 
 CRONTAB_COMMAND_PREFIX = 'LANG_ALL=zh_cn.UTF-8'
+
+# 指定数据库的路由
+DATABASE_ROUTERS = ['meiduo_mall.utils.db_router.MasterSlaveDBRouter']
