@@ -142,8 +142,10 @@
             <ul class="goods_type_list clearfix">
                 {% for sku in page_skus %}
                     <li>
-                        <a href="/detail/{{ sku.id }}/"><img src="{{ sku.default_image.url }}"></a>
-                        <h4><a href="/detail/{{ sku.id }}/">{{ sku.name }}</a></h4>
+{#                        <a href="/detail/{{ sku.id }}/"><img src="{{ sku.default_image.url }}"></a> {# 开发阶段 #}
+{#                        <h4><a href="/detail/{{ sku.id }}/">{{ sku.name }}</a></h4>     #}
+                        <a href="/detail/{{ sku.id }}.html"><img src="{{ sku.default_image.url }}"></a> {# 生产阶段 #}
+                        <h4><a href="/detail/{{ sku.id }}.html">{{ sku.name }}</a></h4>
                         <div class="operate">
                             <span class="price">￥{{ sku.price }}</span>
                             <span class="unit">台</span>
